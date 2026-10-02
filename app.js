@@ -1,15 +1,16 @@
 (() => {
 const WEEKLY_DAYS=[
- {key:'friday',name:'Friday',number:'01',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
- {key:'saturday',name:'Saturday',number:'02',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
- {key:'sunday',name:'Sunday',number:'03',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
- {key:'monday',name:'Monday',number:'04',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
- {key:'tuesday',name:'Tuesday',number:'05',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
- {key:'wednesday',name:'Wednesday',number:'06',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
- {key:'thursday',name:'Thursday',number:'07',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
+ {key:'friday',name:'Friday',number:'01',surahs:'Al-Fātiḥah – An-Nisā’',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
+ {key:'saturday',name:'Saturday',number:'02',surahs:'Al-Mā’idah – Ibrāhīm',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
+ {key:'sunday',name:'Sunday',number:'03',surahs:'Ibrāhīm – Al-Ḥijr',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
+ {key:'monday',name:'Monday',number:'04',surahs:'An-Naḥl – Al-Kahf',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
+ {key:'tuesday',name:'Tuesday',number:'05',surahs:'Al-Furqān – Yā-Sīn',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
+ {key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Ḥujurāt',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
+ {key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
 const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
 const KEY='weeklyQuran:';
+const PLAN_CHOSEN=KEY+'planChosen';
 const QURAN_FIRST=2,QURAN_LAST=849,QURAN_PAGES=848;
 const DAY_NAMES=['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
 const safeGet=(key,fallback=null)=>{try{const v=localStorage.getItem(key);return v==null?fallback:JSON.parse(v)}catch{return fallback}};
@@ -30,14 +31,18 @@ function audioForRange(range){
 }
 function buildPlan(id){
  if(id==='weekly')return {id:'weekly',name:PLANS.weekly.name,cycleDays:7,portions:WEEKLY_DAYS.map((d,i)=>({...d,index:i,label:d.name,week:1,audioSegments:[{src:d.audio,from:0,to:d.duration,duration:d.duration,day:d.key}]}))};
- const p=PLANS[id]||PLANS.weekly,ranges=buildRanges(p.count);
- return {id,name:p.name,cycleDays:p.count,portions:ranges.map((range,i)=>({key:id+'-'+(i+1),name:DAY_NAMES[i%7],number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioForRange(range).reduce((a,s)=>a+s.duration,0),index:i,label:'Day '+(i+1),week:Math.floor(i/7)+1,audioSegments:audioForRange(range)}))};
+ const p=PLANS[id]||PLANS.weekly,factor=p.count/7,portions=[];
+ WEEKLY_DAYS.forEach((day,dayIndex)=>{const length=day.pages[1]-day.pages[0],bounds=Array.from({length:factor+1},(_,j)=>day.pages[0]+Math.round(j*length/factor));for(let part=0;part<factor;part++){const i=dayIndex*factor+part,range=[bounds[part],bounds[part+1]-1],audioSegments=audioForRange(range);portions.push({key:id+'-'+(i+1),name:day.name,number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioSegments.reduce((a,s)=>a+s.duration,0),index:i,label:day.name+' · '+(part+1)+'/'+factor,surahLabel:day.surahs,week:Math.floor(i/7)+1,part:part+1,factor,audioSegments})}});
+ return {id,name:p.name,cycleDays:p.count,portions};
 }
 function getPlan(){return buildPlan(planId())}
 function todayIndex(plan){
- const now=new Date(),base=new Date('2026-01-02T00:00:00'); // Friday anchor; cycles repeat from here.
- const days=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-base)/86400000);
- return ((days%plan.cycleDays)+plan.cycleDays)%plan.cycleDays;
+ const now=new Date(),weekday=(now.getDay()+2)%7; // Friday is day zero.
+ const friday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-weekday);
+ const anchor=new Date(2026,0,2); // A Friday anchor for repeating multi-week cycles.
+ const weeks=Math.floor((friday-anchor)/604800000);
+ const cycleWeek=((weeks%Math.ceil(plan.cycleDays/7))+Math.ceil(plan.cycleDays/7))%Math.ceil(plan.cycleDays/7);
+ return cycleWeek*7+weekday;
 }
 function portionFromRoute(plan,raw){
  if(plan.id==='weekly')return plan.portions.findIndex(p=>p.key===raw);
@@ -47,11 +52,13 @@ const prefersDark=()=>window.matchMedia?window.matchMedia('(prefers-color-scheme
 const getTheme=()=>document.documentElement.dataset.theme||(prefersDark()?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode'})}
 function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
-function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id)}
+function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id);safeSet(PLAN_CHOSEN,true)}
 function install(){
  let prompt=null;const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
- const standalone=(window.matchMedia?window.matchMedia('(display-mode: standalone)').matches:false)||window.navigator.standalone===true;if(standalone){note?.setAttribute('hidden','');return}
+ const isInstalled=()=>((window.matchMedia?window.matchMedia('(display-mode: standalone)').matches:false)||window.navigator.standalone===true);
+ const hide=()=>note?.setAttribute('hidden','');if(isInstalled()){hide();return}
  note?.removeAttribute('hidden');const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ window.addEventListener('appinstalled',hide);window.addEventListener('pageshow',()=>{if(isInstalled())hide()});document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&isInstalled())hide()});
  if(isiOS&&textEl)textEl.textContent='On iPhone or iPad: Share → Add to Home Screen.';
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent="Install Qur'an Khatm on your device."});
  button?.addEventListener('click',async()=>{if(prompt){await prompt.prompt();prompt=null;return}if(isiOS)alert('On iPhone or iPad, tap Share, then choose “Add to Home Screen”.');else alert('Open your browser menu and choose “Install app” or “Add to Home Screen”.')});
@@ -69,14 +76,14 @@ function planHome(){
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#">Change plan</a></div>
+  <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#choose">Change plan</a></div>
   <section class="hero-actions">
    <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${plan.id==='weekly'?todayPortion.label:'Week '+todayPortion.week+' of '+Math.ceil(plan.portions.length/7)+' · '+todayPortion.name}</small></span></a>
+   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${todayPortion.label}</small></span></a>
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Current cycle'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===today?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.pages[0]}–${d.pages[1]}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===today?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?' · '+d.part+'/'+d.factor:''}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
@@ -94,8 +101,8 @@ function reader(planIdValue,key){
  document.querySelector('#app').innerHTML=`
  <div class="reader">
   <header class="topbar">
-   <a class="back" href="#">${icon('back')}<span>Home</span></a>
-   <div class="day-title"><b>${d.label}</b><small>${plan.id==='weekly'?'Friday → Thursday':('Week '+d.week+' of '+Math.ceil(plan.portions.length/7)+' · '+d.name)} · Pages ${d.pages[0]}–${d.pages[1]}</small></div>
+   <a class="back" href="#home">${icon('back')}<span>Home</span></a>
+   <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?' · '+d.part+'/'+d.factor:''}</small></div>
    <button data-theme-toggle class="icon-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
   </header>
   <div class="reader-nav">
@@ -108,7 +115,7 @@ function reader(planIdValue,key){
    <button id="focus" class="tool-btn desktop-only" aria-label="Enter focus mode" title="Focus mode"><span>Focus</span></button>
   </div>
   <div class="progress-line"><span id="reading-progress"></span></div>
-  <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading">${hasPdf?'Opening the Mushaf…':'Opening the Mushaf…'}</div></section>
+  <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading" aria-label="Loading pages"><span class="loading-mark" aria-hidden="true"></span></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="audio-player">
    <audio id="audio" preload="metadata"></audio>
@@ -124,9 +131,9 @@ function reader(planIdValue,key){
   </div>
  </div>`;
  document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.onclick=()=>setTheme(getTheme()==='dark'?'light':'dark'));
- setupReader(plan,d,index,saved,mark);
+ setupReader(plan,d,index,saved,mark);\n setupDaySwipe(plan,index);
 }
-function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
+function setupDaySwipe(plan,index){\n const surface=document.querySelector('#pdf-viewer');let startX=0,startY=0;\n surface.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});\n surface.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.35)return;const target=dx<0?plan.portions[index+1]:plan.portions[index-1];if(target)location.hash='#read/'+plan.id+'/'+target.key},{passive:true});\n}\nfunction fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
 function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
@@ -193,10 +200,13 @@ function openingPage(){
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
 }
 function route(){
+ if(location.hash==='#choose'){openingPage();return}
+ if(location.hash==='#home'){planHome();return}
  const planMatch=location.hash.match(/^#plan\/(weekly|biweekly|fourweekly)$/);
  if(planMatch){setPlan(planMatch[1]);planHome();return}
  const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
- if(m){reader(m[1],m[2]);return}openingPage();
+ if(m){reader(m[1],m[2]);return}
+ if(safeGet(PLAN_CHOSEN,false)){planHome();return}openingPage();
 }
 window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);showBootError?.(e)}});
 function showBootError(error){
