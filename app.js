@@ -1,11 +1,11 @@
 (() => {
 const WEEKLY_DAYS=[
  {key:'friday',name:'Friday',number:'01',surahs:'Al-Fātiḥah – An-Nisā’',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
- {key:'saturday',name:'Saturday',number:'02',surahs:'Al-Mā’idah – Ibrāhīm',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
+ {key:'saturday',name:'Saturday',number:'02',surahs:'Al-Mā’idah – Ar-Ra‘d',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
  {key:'sunday',name:'Sunday',number:'03',surahs:'Ibrāhīm – Al-Ḥijr',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
- {key:'monday',name:'Monday',number:'04',surahs:'An-Naḥl – Al-Kahf',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
- {key:'tuesday',name:'Tuesday',number:'05',surahs:'Al-Furqān – Yā-Sīn',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
- {key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Ḥujurāt',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
+ {key:'monday',name:'Monday',number:'04',surahs:'An-Naḥl – An-Nūr',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
+ {key:'tuesday',name:'Tuesday',number:'05',surahs:'Al-Furqān – Fāṭir',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
+ {key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Fatḥ',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
  {key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
 const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
@@ -32,7 +32,7 @@ function audioForRange(range){
 function buildPlan(id){
  if(id==='weekly')return {id:'weekly',name:PLANS.weekly.name,cycleDays:7,portions:WEEKLY_DAYS.map((d,i)=>({...d,index:i,label:d.name,week:1,audioSegments:[{src:d.audio,from:0,to:d.duration,duration:d.duration,day:d.key}]}))};
  const p=PLANS[id]||PLANS.weekly,factor=p.count/7,portions=[];
- WEEKLY_DAYS.forEach((day,dayIndex)=>{const length=day.pages[1]-day.pages[0],bounds=Array.from({length:factor+1},(_,j)=>day.pages[0]+Math.round(j*length/factor));for(let part=0;part<factor;part++){const i=dayIndex*factor+part,range=[bounds[part],bounds[part+1]-1],audioSegments=audioForRange(range);portions.push({key:id+'-'+(i+1),name:day.name,number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioSegments.reduce((a,s)=>a+s.duration,0),index:i,label:day.name+' · '+(part+1)+'/'+factor,surahLabel:day.surahs,week:Math.floor(i/7)+1,part:part+1,factor,audioSegments})}});
+ WEEKLY_DAYS.forEach((day,dayIndex)=>{const length=day.pages[1]-day.pages[0],bounds=Array.from({length:factor+1},(_,j)=>day.pages[0]+Math.round(j*length/factor));for(let part=0;part<factor;part++){const i=dayIndex*factor+part,range=[bounds[part],bounds[part+1]],audioSegments=audioForRange(range);portions.push({key:id+'-'+(i+1),name:day.name,number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioSegments.reduce((a,s)=>a+s.duration,0),index:i,label:day.name+' · '+(part+1)+'/'+factor,surahLabel:day.surahs,week:Math.floor(i/7)+1,part:part+1,factor,audioSegments})}});
  return {id,name:p.name,cycleDays:p.count,portions};
 }
 function getPlan(){return buildPlan(planId())}
@@ -212,7 +212,7 @@ function route(){
  if(planMatch){setPlan(planMatch[1]);planHome();return}
  const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
  if(m){reader(m[1],m[2]);return}
- if(safeGet(PLAN_CHOSEN,false)){planHome();return}openingPage();
+ if(safeGet(PLAN_CHOSEN,false)||safeGet(KEY+'last')){planHome();return}openingPage();
 }
 window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);showBootError?.(e)}});
 function showBootError(error){
