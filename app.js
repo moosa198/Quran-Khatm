@@ -43,13 +43,14 @@ function portionFromRoute(plan,raw){
  if(plan.id==='weekly')return plan.portions.findIndex(p=>p.key===raw);
  const n=Number(raw);return Number.isInteger(n)&&n>=1&&n<=plan.portions.length?n-1:-1;
 }
-const getTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+const prefersDark=()=>window.matchMedia?window.matchMedia('(prefers-color-scheme:dark)').matches:false;
+const getTheme=()=>document.documentElement.dataset.theme||(prefersDark()?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode'})}
 function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
 function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id)}
 function install(){
  let prompt=null;const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
- const standalone=matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;if(standalone){note?.setAttribute('hidden','');return}
+ const standalone=(window.matchMedia?window.matchMedia('(display-mode: standalone)').matches:false)||window.navigator.standalone===true;if(standalone){note?.setAttribute('hidden','');return}
  note?.removeAttribute('hidden');const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
  if(isiOS&&textEl)textEl.textContent='On iPhone or iPad: Share → Add to Home Screen.';
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent='Install Qur'an Khatm on your device.'});
