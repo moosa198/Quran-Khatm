@@ -125,18 +125,17 @@ function reader(planIdValue,key){
   <header class="topbar">
    <a class="back" href="#home">${icon('back')}<span>Home</span></a>
    <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}</small></div>
-   <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==="dark"?"sun":"moon")}</button>
+   <div class="topbar-actions">
+    <button id="offline" class="topbar-offline" aria-label="Save this day for offline use" title="Save this day for offline use">${icon('save')}</button>
+    <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==="dark"?"sun":"moon")}</button>
+   </div>
   </header>
   <div class="reader-nav">
    ${prev?`<a href="#read/${plan.id}/${prev.key}" class="nav-day">‹ <span>${prev.label}</span></a>`:'<span></span>'}
    <div class="page-jump"><label for="page-range">Page <output id="page-output">${saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]}</output></label><input id="page-range" type="range" min="${d.pages[0]}" max="${d.pages[1]}" value="${saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]}" step="1" aria-label="Jump to page"></div>
    ${next?`<a href="#read/${plan.id}/${next.key}" class="nav-day"><span>${next.label}</span> ›</a>`:'<span></span>'}
   </div>
-  <div class="reader-tools">
-   <button id="offline" class="tool-btn" aria-label="Save this day for offline use" title="Save this day for offline use"><span>Save offline</span></button>
-   <button id="focus" class="tool-btn desktop-only" aria-label="Enter focus mode" title="Focus mode"><span>Focus</span></button>
-  </div>
-  <div class="progress-line"><span id="reading-progress"></span></div>
+  <div class="progress-line" aria-hidden="true"><span id="reading-progress"></span></div>
   <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading" aria-label="Loading pages"><span class="loading-mark" aria-hidden="true"></span></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <section class="completion-panel" id="completion-panel" hidden></section>
