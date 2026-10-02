@@ -16,18 +16,27 @@ Separate PWA for a Friday-to-Thursday weekly Qur’an reading plan, based on the
 
 The day boundaries are intentionally preserved exactly as supplied.
 
-## Media
+## Media layout
 
-Place the Qur’an PDF at `quran.pdf` and the seven audio segments at `audio/friday.mp3` etc.
+Each weekly portion has its own PDF and compressed audio file:
 
-The supplied full Sheikh Ahmed Dibaan recording is 7:28:33. For web delivery, the seven segments should be encoded separately at a lower bitrate rather than loading one 409 MB file. The app uses `preload="metadata"` so opening a day does not intentionally download the entire track before playback.
+`quran/friday.pdf` + `audio/friday.mp3` through `thursday`.
+
+The supplied Sheikh Ahmed Dibaan recording is 7:28:33. The web audio is encoded as **48 kbps mono MP3**, reducing the full set to roughly 155 MB while retaining speech-focused audio quality. The player uses `preload="metadata"` so opening a day does not intentionally download the entire track before playback.
+
+The original Arabic-only 13-line Qur’an PDF is split into the seven ranges above. The source PDF is not committed to the repository.
 
 ## Offline / PWA
 
-The service worker caches the application shell and runtime-caches same-origin media after it is requested. The PDF and the selected day's audio therefore become available for offline use after they have been loaded once.
+The service worker caches the application shell and runtime-caches same-origin media after it is requested. A day's PDF and audio can therefore become available offline after that day's files have been loaded once.
 
 PDF.js is loaded from cdnjs at runtime.
 
 ## Deploy
 
 Enable GitHub Pages for the repository, using the `main` branch and root folder.
+
+## Local media generation
+
+- `scripts/split-pdfs.py` creates the seven day PDFs from `quran-original.pdf`.
+- `scripts/split-audio.sh` creates the seven 48 kbps mono MP3s from `source.mp3`.
