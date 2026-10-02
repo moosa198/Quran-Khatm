@@ -24,6 +24,15 @@ function unmarkCompleted(planId,key){const m=completedMap();delete m[completionK
 function completionReady(plan,d){const k=completionKey(plan.id,d.key);return !!pageDoneMap()[k]||!!audioDoneMap()[k];}
 function setDone(mapKey,planId,key){const m=safeGet(mapKey,{})||{};m[completionKey(planId,key)]=Date.now();safeSet(mapKey,m);return m;}
 function completedCount(plan){return plan.portions.filter(p=>isCompleted(plan.id,p.key)).length;}
+function portionProgress(plan,d){
+ const key=completionKey(plan.id,d.key);
+ if(isCompleted(plan.id,d.key))return 100;
+ const last=safeGet(KEY+'last',{}),page=last?.plan===plan.id&&last.key===d.key?Number(last.page)||0:0;
+ const pagePct=page>=d.pages[0]?Math.max(0,Math.min(100,((page-d.pages[0]+1)/(d.pages[1]-d.pages[0]+1))*100)):0;
+ const audio=Number(safeGet(KEY+'audio:'+plan.id+':'+d.key,0))||0;
+ const duration=d.duration||1,audioPct=Math.max(0,Math.min(100,audio/duration*100));
+ return Math.round(Math.max(pagePct,audioPct));
+}
 const QURAN_FIRST=2,QURAN_LAST=849,QURAN_PAGES=848;
 const DAY_NAMES=['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
 const safeGet=(key,fallback=null)=>{try{const v=localStorage.getItem(key);return v==null?fallback:JSON.parse(v)}catch{return fallback}};
@@ -102,7 +111,7 @@ function planHome(){
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your journey'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key);return `<a class="day-card ${complete?'completed ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Mark ${d.label} incomplete">Undo</button>`:`<span class="chevron">${icon('next')}</span>`}</span></a>`}).join('')}</nav>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Mark ${d.label} incomplete">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
@@ -135,6 +144,7 @@ function reader(planIdValue,key){
    <div class="page-jump"><label for="page-range">Page <output id="page-output">${saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]}</output></label><input id="page-range" type="range" min="${d.pages[0]}" max="${d.pages[1]}" value="${saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]}" step="1" aria-label="Jump to page"></div>
    ${next?`<a href="#read/${plan.id}/${next.key}" class="nav-day"><span>${next.label}</span> ›</a>`:'<span></span>'}
   </div>
+  <div class="reader-bookmarks"><button id="bookmark-list-toggle" type="button" aria-expanded="false">Saved pages <span id="bookmark-count"></span>⌄</button><div id="bookmark-list-panel" hidden></div></div>
   <div class="progress-line" aria-hidden="true"><span id="reading-progress"></span></div>
   <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading" aria-label="Loading pages"><span class="loading-mark" aria-hidden="true"></span></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -202,7 +212,8 @@ function setupDaySwipe(plan,index){
 function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
-function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
+function getBookmarks(plan,d){const raw=(safeGet(KEY+'bookmarks',{})||{})[plan.id+':'+d.key];return Array.isArray(raw)?raw.map(Number):raw?[Number(raw)]:[]}
+function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},key=plan.id+':'+d.key,list=getBookmarks(plan,d),next=list.includes(Number(page))?list.filter(n=>n!==Number(page)):[...list,Number(page)].sort((a,b)=>a-b);if(next.length)marks[key]=next;else delete marks[key];safeSet(KEY+'bookmarks',marks);return next}
 async function saveOffline(d){const button=document.querySelector('#offline');if(!('caches'in window)){toast('Offline saving is not supported here.');return}button.disabled=true;button.classList.add('active');button.setAttribute('aria-label','Saving offline…');try{const cache=await caches.open('quran-offline-v1');const pdfs=d.pdf?[d.pdf]:[...new Set(d.audioSegments.map(s=>weeklyByKey(s.day).pdf))];await Promise.all([...pdfs.map(p=>cache.add(new Request(p))),...d.audioSegments.map(s=>cache.add(new Request(s.src,{credentials:'same-origin'})))]);button.setAttribute('aria-label','Saved offline');toast(d.label+' saved for offline use')}catch(e){button.classList.remove('active');button.setAttribute('aria-label','Save this day for offline use');toast('Could not save this day. Check your connection and try again.')}button.disabled=false}
 async function setupReader(plan,d,index,saved,initialBookmark){
  const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time'),segments=d.audioSegments||[],total=segments.reduce((a,s)=>a+s.duration,0);
@@ -220,7 +231,11 @@ async function setupReader(plan,d,index,saved,initialBookmark){
  document.querySelector('#back10').onclick=()=>setGlobalTime(globalTime()-10,!audio.paused);
  document.querySelector('#forward10').onclick=()=>setGlobalTime(globalTime()+10,!audio.paused);
  speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';safeSet(KEY+'speed',rate)};
- const bookmark=document.querySelector('#bookmark');bookmark.onclick=()=>{const p=window.currentQuranPage||d.pages[0],b=setBookmark(plan,d,p),isOn=!!b;bookmark.classList.toggle('active',isOn);bookmark.innerHTML=icon(isOn?'bookmarked':'bookmark');bookmark.setAttribute('aria-label',isOn?'Remove bookmark':'Bookmark current page');bookmark.title=isOn?'Remove bookmark':'Bookmark current page';toast(isOn?'Page '+p+' bookmarked':'Bookmark removed')};
+ const bookmark=document.querySelector('#bookmark');bookmark.classList.remove('active');bookmark.innerHTML=icon('bookmark');bookmark.setAttribute('aria-label','Save this page');bookmark.title='Save this page';
+ const listToggle=document.querySelector('#bookmark-list-toggle'),listPanel=document.querySelector('#bookmark-list-panel'),countEl=document.querySelector('#bookmark-count');
+ function refreshBookmarks(){const list=getBookmarks(plan,d);countEl.textContent=list.length?'('+list.length+')':'';listPanel.innerHTML=list.length?list.map(p=>'<button type="button" class="saved-page" data-page="'+p+'">Page '+p+' <span>Open</span></button>').join(''):'<p class="no-saved-pages">No saved pages yet.</p>';listPanel.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{const page=Number(b.dataset.page);document.querySelector('.pdf-page[data-page="'+page+'"]')?.scrollIntoView({behavior:'smooth',block:'start'});listPanel.hidden=true;listToggle.setAttribute('aria-expanded','false')})}
+ refreshBookmarks();listToggle.onclick=()=>{const open=listPanel.hidden;listPanel.hidden=!open;listToggle.setAttribute('aria-expanded',String(open))};
+ bookmark.onclick=()=>{const p=window.currentQuranPage||d.pages[0],list=setBookmark(plan,d,p),saved=list.includes(p);bookmark.classList.remove('active');bookmark.innerHTML=icon('bookmark');toast(saved?'Page '+p+' saved':'Page '+p+' removed');refreshBookmarks()};
  document.querySelector('#offline').onclick=()=>saveOffline(d);
  const focus=document.querySelector('#focus');if(focus){focus.onclick=async()=>{if(document.fullscreenElement)await document.exitFullscreen?.();else await document.documentElement.requestFullscreen?.();updateFocus()};document.addEventListener('fullscreenchange',updateFocus)}
  function updateFocus(){if(!focus)return;const on=!!document.fullscreenElement;focus.innerHTML='<span>'+(on?'Exit focus':'Focus')+'</span>';focus.setAttribute('aria-label',on?'Exit focus mode':'Enter focus mode');focus.title=on?'Exit focus mode':'Focus mode'}
