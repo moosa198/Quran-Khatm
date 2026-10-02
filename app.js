@@ -1,5 +1,5 @@
 (() => {
-const DAYS=[
+const WEEKLY_DAYS=[
  {key:'friday',name:'Friday',number:'01',pages:[2,147],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
  {key:'saturday',name:'Saturday',number:'02',pages:[147,288],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
  {key:'sunday',name:'Sunday',number:'03',pages:[288,393],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
@@ -8,31 +8,58 @@ const DAYS=[
  {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
  {key:'thursday',name:'Thursday',number:'07',pages:[721,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
+const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
 const KEY='weeklyQuran:';
+const QURAN_FIRST=2,QURAN_LAST=849,QURAN_PAGES=848;
+const DAY_NAMES=['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
 const safeGet=(key,fallback=null)=>{try{const v=localStorage.getItem(key);return v==null?fallback:JSON.parse(v)}catch{return fallback}};
 const safeSet=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{}};
-const dayByKey=k=>DAYS.find(d=>d.key===k)||DAYS[0];
-const todayKey=()=>['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][new Date().getDay()];
+const weeklyByKey=k=>WEEKLY_DAYS.find(d=>d.key===k)||WEEKLY_DAYS[0];
+const planId=()=>safeGet(KEY+'plan','weekly');
+const buildRanges=count=>Array.from({length:count},(_,i)=>[QURAN_FIRST+Math.round(i*QURAN_PAGES/count),QURAN_FIRST+Math.round((i+1)*QURAN_PAGES/count)-1]);
+function audioForRange(range){
+ const [start,end]=range,segments=[];
+ WEEKLY_DAYS.forEach(d=>{
+  const overlapStart=Math.max(start,d.pages[0]),overlapEnd=Math.min(end,d.pages[1]);
+  if(overlapStart<=overlapEnd){
+   const pages=d.pages[1]-d.pages[0]+1, from=(overlapStart-d.pages[0])/pages, to=(overlapEnd-d.pages[0]+1)/pages;
+   segments.push({src:d.audio,from:Math.max(0,from*d.duration),to:Math.min(d.duration,to*d.duration),duration:Math.max(0,(to-from)*d.duration),day:d.key});
+  }
+ });
+ return segments;
+}
+function buildPlan(id){
+ if(id==='weekly')return {id:'weekly',name:PLANS.weekly.name,cycleDays:7,portions:WEEKLY_DAYS.map((d,i)=>({...d,index:i,label:d.name,week:1,audioSegments:[{src:d.audio,from:0,to:d.duration,duration:d.duration,day:d.key}]}))};
+ const p=PLANS[id]||PLANS.weekly,ranges=buildRanges(p.count);
+ return {id,name:p.name,cycleDays:p.count,portions:ranges.map((range,i)=>({key:id+'-'+(i+1),name:DAY_NAMES[i%7],number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioForRange(range).reduce((a,s)=>a+s.duration,0),index:i,label:'Day '+(i+1),week:Math.floor(i/7)+1,audioSegments:audioForRange(range)}))};
+}
+function getPlan(){return buildPlan(planId())}
+function todayIndex(plan){
+ const now=new Date(),base=new Date('2026-01-02T00:00:00'); // Friday anchor; cycles repeat from here.
+ const days=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate())-base)/86400000);
+ return ((days%plan.cycleDays)+plan.cycleDays)%plan.cycleDays;
+}
+function portionFromRoute(plan,raw){
+ if(plan.id==='weekly')return plan.portions.findIndex(p=>p.key===raw);
+ const n=Number(raw);return Number.isInteger(n)&&n>=1&&n<=plan.portions.length?n-1:-1;
+}
 const getTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode'})}
-function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
+function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
+function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id)}
 function install(){
- let prompt=null;
- const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
- const standalone=matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
- if(standalone){note?.setAttribute('hidden','');return}
- note?.removeAttribute('hidden');
- const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ let prompt=null;const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
+ const standalone=matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;if(standalone){note?.setAttribute('hidden','');return}
+ note?.removeAttribute('hidden');const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
  if(isiOS&&textEl)textEl.textContent='On iPhone or iPad: Share → Add to Home Screen.';
  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent='Install the Qur’an reader on your device.'});
- button?.addEventListener('click',async()=>{
-  if(prompt){await prompt.prompt();prompt=null;return}
-  if(isiOS){alert('On iPhone or iPad, tap Share, then choose “Add to Home Screen”.')}
-  else{alert('Open your browser menu and choose “Install app” or “Add to Home Screen”.')}
- });
+ button?.addEventListener('click',async()=>{if(prompt){await prompt.prompt();prompt=null;return}if(isiOS)alert('On iPhone or iPad, tap Share, then choose “Add to Home Screen”.');else alert('Open your browser menu and choose “Install app” or “Add to Home Screen”.')});
+}
+function scheduleSelector(plan){
+ return '<div class="schedule-selector" role="group" aria-label="Reading schedule">'+Object.values(PLANS).map(p=>'<button class="schedule-option '+(p.id===plan.id?'active':'')+'" data-plan="'+p.id+'">'+p.name+'</button>').join('')+'</div>';
 }
 function home(){
- const today=todayKey(), saved=safeGet(KEY+'last'), continueDay=saved?.day?dayByKey(saved.day):dayByKey(today), marks=safeGet(KEY+'bookmarks',{});
+ const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{});
  document.querySelector('#app').innerHTML=`
  <main class="home">
   <header class="home-header">
@@ -41,118 +68,122 @@ function home(){
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
+  <section class="schedule-section">
+   <div class="section-heading"><span>Your reading plan</span><small>Complete the Qur’an every</small></div>
+   ${scheduleSelector(plan)}
+  </section>
   <section class="hero-actions">
-   <a class="action-card primary" href="#read/${continueDay.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continueDay.name}${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/${today}"><span class="action-icon">▣</span><span><b>Today</b><small>${dayByKey(today).name}</small></span></a>
+   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
+   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${todayPortion.label}${plan.id!=='weekly'?' · Week '+todayPortion.week:''}</small></span></a>
   </section>
   <section class="day-section">
-   <div class="section-heading"><span>Friday → Thursday</span></div>
-   <nav class="day-grid" aria-label="Weekly portions">${DAYS.map(d=>`<a class="day-card ${d.key===today?'today':''}" href="#read/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.name}</b>${marks[d.key]?'<small>Bookmarked · page '+marks[d.key]+'</small>':''}</span><span class="chevron">${icon('next')}</span></a>`).join('')}</nav>
+   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Current cycle'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===today?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.pages[0]}–${d.pages[1]}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
   </section>
-  <section class="bookmarks-section" ${Object.keys(marks).length?'':'hidden'}>
+  <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
-   <div class="bookmark-list">${DAYS.filter(d=>marks[d.key]).map(d=>`<a href="#read/${d.key}">Page ${marks[d.key]} <span>${d.name}</span><b>${icon('next')}</b></a>`).join('')}</div>
+   <div class="bookmark-list">${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/${plan.id}/${d.key}">Page ${m} <span>${d.label}</span><b>${icon('next')}</b></a>`:''}).join('')}</div>
   </section>
   <section class="install-note" id="install-note"><span><b>Install the reader</b><small id="install-text">Add it to your home screen for quick access.</small></span><button id="install">Install</button></section>
  </main>`;
- document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');install();
+ document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
+ document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{setPlan(b.dataset.plan);location.hash='';route()});install();
 }
-function reader(key){
- const d=dayByKey(key), saved=safeGet(KEY+'last'), marks=safeGet(KEY+'bookmarks',{});
- const mark=marks[d.key];
- const index=DAYS.findIndex(x=>x.key===d.key), prev=DAYS[index-1], next=DAYS[index+1];
+function reader(planIdValue,key){
+ const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index],saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{}),mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
+ const hasPdf=!!d.pdf;
  document.querySelector('#app').innerHTML=`
  <div class="reader">
   <header class="topbar">
    <a class="back" href="#">${icon('back')}<span>Home</span></a>
-   <div class="day-title"><b>${d.name}</b><small>Pages ${d.pages[0]}–${d.pages[1]}</small></div>
+   <div class="day-title"><b>${d.label}</b><small>${plan.name} · Pages ${d.pages[0]}–${d.pages[1]}</small></div>
    <button data-theme-toggle class="icon-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
   </header>
   <div class="reader-nav">
-   ${prev?`<a href="#read/${prev.key}" class="nav-day">‹ <span>${prev.name}</span></a>`:'<span></span>'}
-   <div class="page-jump"><label for="page-range">Page <output id="page-output">${saved?.day===d.key&&saved.page?saved.page:d.pages[0]}</output></label><input id="page-range" type="range" min="${d.pages[0]}" max="${d.pages[1]}" value="${saved?.day===d.key&&saved.page?saved.page:d.pages[0]}" step="1" aria-label="Jump to page"></div>
-   ${next?`<a href="#read/${next.key}" class="nav-day"><span>${next.name}</span> ›</a>`:'<span></span>'}
+   ${prev?`<a href="#read/${plan.id}/${prev.key}" class="nav-day">‹ <span>${prev.label}</span></a>`:'<span></span>'}
+   <div class="page-jump"><label for="page-range">Page <output id="page-output">${saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]}</output></label><input id="page-range" type="range" min="${d.pages[0]}" max="${d.pages[1]}" value="${saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]}" step="1" aria-label="Jump to page"></div>
+   ${next?`<a href="#read/${plan.id}/${next.key}" class="nav-day"><span>${next.label}</span> ›</a>`:'<span></span>'}
   </div>
   <div class="reader-tools">
    <button id="offline" class="tool-btn" aria-label="Save this day for offline use" title="Save this day for offline use"><span>Save offline</span></button>
    <button id="focus" class="tool-btn desktop-only" aria-label="Enter focus mode" title="Focus mode"><span>Focus</span></button>
   </div>
   <div class="progress-line"><span id="reading-progress"></span></div>
-  <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading">Opening the Mushaf…</div></section>
+  <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading">${hasPdf?'Opening the Mushaf…':'Opening the Mushaf…'}</div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="audio-player">
-   <audio id="audio" preload="metadata" crossorigin="anonymous" src="${d.audio}"></audio>
+   <audio id="audio" preload="metadata"></audio>
    <div class="player-main">
     <button id="play" class="play-btn" aria-label="Play" title="Play">${icon('play')}</button>
     <button id="back10" class="mini-btn" aria-label="Back 10 seconds" title="Back 10 seconds">−10</button>
-    <div class="track"><div class="time-row"><span id="time">0:00</span><span>${fmt(d.duration)}</span></div><input id="seek" type="range" min="0" max="${d.duration}" value="0" step=".1" aria-label="Audio position"></div>
+    <div class="track"><div class="time-row"><span id="time">0:00</span><span id="total-time">${fmt(d.duration)}</span></div><input id="seek" type="range" min="0" max="${d.duration}" value="0" step=".1" aria-label="Audio position"></div>
     <button id="forward10" class="mini-btn" aria-label="Forward 10 seconds" title="Forward 10 seconds">+10</button>
     <button id="speed" class="speed" aria-label="Playback speed">1×</button>
     <button id="bookmark" class="audio-bookmark ${mark?'active':''}" aria-label="${mark?'Remove bookmark':'Bookmark current page'}" title="${mark?'Remove bookmark':'Bookmark current page'}">${icon(mark?'bookmarked':'bookmark')}</button>
    </div>
-   <div class="player-label">Sheikh Ahmed Dibaan · ${d.name} portion</div>
+   <div class="player-label">Sheikh Ahmed Dibaan · ${d.label} portion${plan.id==='weekly'?'':' · audio follows the selected pages'}</div>
   </div>
  </div>`;
  document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.onclick=()=>setTheme(getTheme()==='dark'?'light':'dark'));
- setupReader(d,saved,mark);
+ setupReader(plan,d,index,saved,mark);
 }
 function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
-function saveLast(day,page){safeSet(KEY+'last',{day:day.key,page,updated:Date.now()})}
+function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
-function setBookmark(d,page){
- const marks=safeGet(KEY+'bookmarks',{});
- if(marks[d.key]===page)delete marks[d.key];else marks[d.key]=page;
- safeSet(KEY+'bookmarks',marks);return marks[d.key]||null;
-}
-async function saveOffline(d){
- const button=document.querySelector('#offline');if(!('caches' in window)){toast('Offline saving is not supported here.');return}
- button.disabled=true;button.classList.add('active');button.textContent='Saving…';
- try{
-  const cache=await caches.open('quran-offline-v1');
-  await Promise.all([cache.add(new Request(d.pdf)),cache.add(new Request(d.audio,{credentials:'same-origin'}))]);
-  safeSet(KEY+'offline:'+d.key,true);button.textContent='Saved offline';toast(d.name+' saved for offline use');
- }catch(e){button.classList.remove('active');button.textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}
- button.disabled=false;
-}
-async function setupReader(d,saved,initialBookmark){
- const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time');
- let rate=Number(safeGet(KEY+'speed',1));if(![1,1.5,2].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';
+function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{}),key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
+async function saveOffline(d){const button=document.querySelector('#offline');if(!d.pdf){toast('Offline PDF saving is not available for this schedule yet.');return}if(!('caches'in window)){toast('Offline saving is not supported here.');return}button.disabled=true;button.classList.add('active');button.textContent='Saving…';try{const cache=await caches.open('quran-offline-v1');await Promise.all([cache.add(new Request(d.pdf)),...d.audioSegments.map(s=>cache.add(new Request(s.src,{credentials:'same-origin'})))]);button.textContent='Saved offline';toast(d.label+' saved for offline use')}catch(e){button.classList.remove('active');button.textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}button.disabled=false}
+async function setupReader(plan,d,index,saved,initialBookmark){
+ const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time'),segments=d.audioSegments||[],total=segments.reduce((a,s)=>a+s.duration,0);
+ let segIndex=0,segElapsed=0,rate=Number(safeGet(KEY+'speed',1));if(![1,1.5,2].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';seek.max=total||d.duration;
  const setPlay=()=>{const playing=!audio.paused;play.innerHTML=icon(playing?'pause':'play');play.setAttribute('aria-label',playing?'Pause':'Play');play.title=playing?'Pause':'Play'};
+ function loadSegment(i,autoplay=false,position=0){if(!segments[i])return;segIndex=i;audio.src=segments[i].src;audio.currentTime=Math.max(0,segments[i].from+position);if(autoplay)audio.play().catch(()=>{})}
+ function globalTime(){let t=segElapsed;for(let i=0;i<segIndex;i++)t+=segments[i].duration;return t}
+ function setGlobalTime(v,autoplay=false){v=Math.max(0,Math.min(total,v));let acc=0;for(let i=0;i<segments.length;i++){if(v<=acc+segments[i].duration||i===segments.length-1){segIndex=i;segElapsed=Math.max(0,v-acc);loadSegment(i,autoplay,segElapsed);return}acc+=segments[i].duration}}
+ if(segments.length)loadSegment(0);
+ const stored=Number(localStorage.getItem(KEY+'audio:'+plan.id+':'+d.key)||0);if(stored>2&&stored<total-2)setGlobalTime(stored,false);
  play.onclick=()=>audio.paused?audio.play().catch(()=>{}):audio.pause();audio.onplay=setPlay;audio.onpause=setPlay;
- let lastSaved=-1;audio.ontimeupdate=()=>{seek.value=audio.currentTime;time.textContent=fmt(audio.currentTime);const bucket=Math.floor(audio.currentTime/5);if(bucket!==lastSaved){lastSaved=bucket;try{localStorage.setItem(KEY+'audio:'+d.key,String(audio.currentTime))}catch{}}};
- audio.onloadedmetadata=()=>{const p=Number(localStorage.getItem(KEY+'audio:'+d.key)||0);if(p>2&&p<audio.duration-2)audio.currentTime=p;setPlay()};
- audio.onended=()=>{const i=DAYS.findIndex(x=>x.key===d.key);if(DAYS[i+1])location.hash='#read/'+DAYS[i+1].key};
- seek.oninput=()=>audio.currentTime=Number(seek.value);
- document.querySelector('#back10').onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-10);
- document.querySelector('#forward10').onclick=()=>audio.currentTime=Math.min(audio.duration||d.duration,audio.currentTime+10);
+ audio.ontimeupdate=()=>{if(!segments[segIndex])return;segElapsed=Math.max(0,audio.currentTime-segments[segIndex].from);const g=globalTime();seek.value=g;time.textContent=fmt(g);const bucket=Math.floor(g/5);if(bucket!==(window.__audioBucket||-1)){window.__audioBucket=bucket;try{localStorage.setItem(KEY+'audio:'+plan.id+':'+d.key,String(g))}catch{}}};
+ audio.onended=()=>{if(segIndex<segments.length-1){loadSegment(segIndex+1,true);return}const nextPortion=plan.portions[index+1];if(nextPortion)location.hash='#read/'+plan.id+'/'+nextPortion.key};
+ seek.oninput=()=>setGlobalTime(Number(seek.value),false);
+ document.querySelector('#back10').onclick=()=>setGlobalTime(globalTime()-10,!audio.paused);
+ document.querySelector('#forward10').onclick=()=>setGlobalTime(globalTime()+10,!audio.paused);
  speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';safeSet(KEY+'speed',rate)};
- audio.onerror=()=>{const label=document.querySelector('.player-label');if(label)label.textContent='Audio unavailable — check the selected MP3 in quran/.'};
- const bookmark=document.querySelector('#bookmark');
- bookmark.onclick=()=>{const p=window.currentQuranPage||d.pages[0],b=setBookmark(d,p),isOn=!!b;bookmark.classList.toggle('active',isOn);bookmark.innerHTML=icon(isOn?'bookmarked':'bookmark');bookmark.setAttribute('aria-label',isOn?'Remove bookmark':'Bookmark current page');bookmark.title=isOn?'Remove bookmark':'Bookmark current page';toast(isOn?'Page '+p+' bookmarked':'Bookmark removed')};
+ const bookmark=document.querySelector('#bookmark');bookmark.onclick=()=>{const p=window.currentQuranPage||d.pages[0],b=setBookmark(plan,d,p),isOn=!!b;bookmark.classList.toggle('active',isOn);bookmark.innerHTML=icon(isOn?'bookmarked':'bookmark');bookmark.setAttribute('aria-label',isOn?'Remove bookmark':'Bookmark current page');bookmark.title=isOn?'Remove bookmark':'Bookmark current page';toast(isOn?'Page '+p+' bookmarked':'Bookmark removed')};
  document.querySelector('#offline').onclick=()=>saveOffline(d);
- const focus=document.querySelector('#focus');
- if(focus){focus.onclick=async()=>{if(document.fullscreenElement){await document.exitFullscreen?.()}else await document.documentElement.requestFullscreen?.();updateFocus()};document.addEventListener('fullscreenchange',updateFocus)}
+ const focus=document.querySelector('#focus');if(focus){focus.onclick=async()=>{if(document.fullscreenElement)await document.exitFullscreen?.();else await document.documentElement.requestFullscreen?.();updateFocus()};document.addEventListener('fullscreenchange',updateFocus)}
  function updateFocus(){if(!focus)return;const on=!!document.fullscreenElement;focus.innerHTML='<span>'+(on?'Exit focus':'Focus')+'</span>';focus.setAttribute('aria-label',on?'Exit focus mode':'Enter focus mode');focus.title=on?'Exit focus mode':'Focus mode'}
- const range=document.querySelector('#page-range'),output=document.querySelector('#page-output');
- range.oninput=()=>{output.value=range.value;const p=document.querySelector('.pdf-page[data-page="'+range.value+'"]');p?.scrollIntoView({behavior:'smooth',block:'start'});saveLast(d,Number(range.value));window.currentQuranPage=Number(range.value)};
- await renderPdf(d,saved?.day===d.key&&saved.page?saved.page:d.pages[0]);
+ const range=document.querySelector('#page-range'),output=document.querySelector('#page-output');range.oninput=()=>{output.value=range.value;document.querySelector('.pdf-page[data-page="'+range.value+'"]')?.scrollIntoView({behavior:'smooth',block:'start'});saveLast(plan,d,index,Number(range.value));window.currentQuranPage=Number(range.value)};
+ await renderPdf(d,saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]);
  if(initialBookmark)toast('Bookmark: page '+initialBookmark);
 }
 async function renderPdf(d,startPage){
  const viewer=document.querySelector('#pdf-viewer');if(!window.pdfjsLib){viewer.innerHTML='<div class="error">PDF viewer unavailable.</div>';return}
  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  try{
-  const pdf=await pdfjsLib.getDocument(d.pdf).promise,first=Math.max(1,d.pages[0]),last=Math.min(d.pages[1],first+pdf.numPages-1),pages=[];
-  viewer.replaceChildren();
-  for(let n=first;n<=last;n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
-  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(pdf,e.target,first)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});
-  pages.forEach(p=>observer.observe(p));
-  const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;saveLast(d,n);document.querySelector('#reading-progress').style.width=((n-first+1)/(last-first+1)*100)+'%';const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=n;o.value=n}}}),{rootMargin:'-35% 0px -55% 0px'});
-  pages.forEach(p=>progress.observe(p));
-  const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+  let pdf,first=d.pages[0],last=d.pages[1];
+  if(d.pdf)pdf=await pdfjsLib.getDocument(d.pdf).promise;else{
+   const files=[...new Set(d.audioSegments.map(s=>s.day))]; // The 2/4-week plans reuse the existing day PDFs.
+   const source=weeklyByKey(files[0]);pdf=await pdfjsLib.getDocument(source.pdf).promise;
+   viewer.innerHTML='<div class="schedule-note">This schedule spans multiple Mushaf files. Use the day portions below to continue reading.</div>';
+   const covered=new Set();
+   files.forEach(k=>{const wd=weeklyByKey(k);for(let p=Math.max(first,wd.pages[0]);p<=Math.min(last,wd.pages[1]);p++)covered.add(p)});
+   const needed=[...covered].sort((a,b)=>a-b);for(const p of needed){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=p;wrap.innerHTML='<div class="page-loading">Page '+p+'</div>';viewer.appendChild(wrap)}
+   return renderPdfPages(pdf,viewer,needed,first,startPage);
+  }
+  const pages=[];for(let n=first;n<=Math.min(last,first+pdf.numPages-1);n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
+  renderPdfObservers(pdf,pages,first,startPage);
  }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Check the selected day’s PDF.</div>'}
 }
+function renderPdfPages(pdf,viewer,needed,first,startPage){const pages=[...viewer.querySelectorAll('.pdf-page')];renderPdfObservers(pdf,pages,first,startPage)}
+function renderPdfObservers(pdf,pages,first,startPage){
+ const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(pdf,e.target,first)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
+ const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(getPlan(),getPlan().portions.find(x=>n>=x.pages[0]&&n<=x.pages[1])||getPlan().portions[0],getPlan().portions.findIndex(x=>n>=x.pages[0]&&n<=x.pages[1]),n);document.querySelector('#reading-progress').style.width=((n-first+1)/(pages[pages.length-1].dataset.page-first+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
+ const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+}
 async function renderPage(pdf,wrap,first){try{const page=await pdf.getPage(Number(wrap.dataset.page)-first+1),base=page.getViewport({scale:1}),width=Math.min(980,Math.max(280,wrap.clientWidth||760)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,2),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
-function route(){const m=location.hash.match(/^#read\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday)$/);m?reader(m[1]):home()}
+function route(){
+ const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
+ if(m){const p=buildPlan(m[1]),raw=m[2];reader(m[1],raw);return}home();
+}
 window.addEventListener('hashchange',route);route();
 })();
