@@ -158,7 +158,7 @@ function reader(planIdValue,key){
     <button id="back10" class="mini-btn" aria-label="Back 10 seconds" title="Back 10 seconds">−10</button>
     <div class="track"><div class="time-row"><span id="time">0:00</span><span id="total-time">${fmt(d.duration)}</span></div><input id="seek" type="range" min="0" max="${d.duration}" value="0" step=".1" aria-label="Audio position"></div>
     <button id="forward10" class="mini-btn" aria-label="Forward 10 seconds" title="Forward 10 seconds">+10</button>
-    <button id="speed" class="speed" aria-label="Playback speed">1×</button>
+    <div class="speed-control"><button id="speed" class="speed" type="button" aria-label="Playback speed" aria-haspopup="menu" aria-expanded="false">1×</button><div id="speed-menu" class="speed-menu" role="menu" hidden><div class="speed-menu-title">Playback speed</div><button type="button" role="menuitemradio" data-speed="0.5" aria-checked="false">0.5×</button><button type="button" role="menuitemradio" data-speed="0.75" aria-checked="false">0.75×</button><button type="button" role="menuitemradio" data-speed="1" aria-checked="true">1×</button><button type="button" role="menuitemradio" data-speed="1.25" aria-checked="false">1.25×</button></div></div>
     <button id="bookmark" class="audio-bookmark ${mark?'active':''}" aria-label="${mark?'Remove bookmark':'Bookmark current page'}" title="${mark?'Remove bookmark':'Bookmark current page'}">${icon(mark?'bookmarked':'bookmark')}</button>
    </div>
    <div class="player-label">Sheikh Ahmed Dibaan · ${d.label} · Read along, or listen while you go about your day.</div>
@@ -212,6 +212,7 @@ function setupDaySwipe(plan,index){
  surface.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.35)return;const target=dx<0?plan.portions[index+1]:plan.portions[index-1];if(target)location.hash='#read/'+plan.id+'/'+target.key},{passive:true});
 }
 function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}\nfunction habitTime(s){const minutes=Math.max(1,Math.round(Number(s||0)/60));if(minutes<60)return '≈ '+minutes+' min';const hours=Math.floor(minutes/60),mins=minutes%60;if(mins<10)return '≈ '+hours+' hr';return '≈ '+hours+'½ hr'}
+function planDailyTime(planId){const plan=PLANS[planId]||PLANS.weekly;const total=WEEKLY_DAYS.reduce((sum,d)=>sum+d.duration,0);return habitTime(total/plan.count)}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
 function getBookmarks(plan,d){const raw=(safeGet(KEY+'bookmarks',{})||{})[plan.id+':'+d.key];return Array.isArray(raw)?raw.map(Number):raw?[Number(raw)]:[]}
@@ -219,7 +220,12 @@ function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},ke
 async function saveOffline(d){const button=document.querySelector('#offline');if(!('caches'in window)){toast('Offline saving is not supported here.');return}button.disabled=true;button.classList.add('active');button.setAttribute('aria-label','Saving offline…');try{const cache=await caches.open('quran-offline-v1');const pdfs=d.pdf?[d.pdf]:[...new Set(d.audioSegments.map(s=>weeklyByKey(s.day).pdf))];await Promise.all([...pdfs.map(p=>cache.add(new Request(p))),...d.audioSegments.map(s=>cache.add(new Request(s.src,{credentials:'same-origin'})))]);button.setAttribute('aria-label','Saved offline');toast(d.label+' saved for offline use')}catch(e){button.classList.remove('active');button.setAttribute('aria-label','Save this day for offline use');toast('Could not save this day. Check your connection and try again.')}button.disabled=false}
 async function setupReader(plan,d,index,saved,initialBookmark){
  const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time'),segments=d.audioSegments||[],total=segments.reduce((a,s)=>a+s.duration,0);
- let segIndex=0,segElapsed=0,rate=Number(safeGet(KEY+'speed',1));if(![1,1.5,2].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';seek.max=total||d.duration;
+ let segIndex=0,segElapsed=0,rate=Number(safeGet(KEY+'speed',1));if(![0.5,0.75,1,1.25].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';seek.max=total||d.duration;
+ const speedMenu=document.querySelector('#speed-menu');
+ const speedOptions=[...document.querySelectorAll('[data-speed]')];
+ function setSpeed(value){rate=Number(value);audio.playbackRate=rate;speed.textContent=rate+'×';safeSet(KEY+'speed',rate);speedOptions.forEach(b=>b.setAttribute('aria-checked',String(Number(b.dataset.speed)===rate)));}
+ function closeSpeedMenu(){speedMenu.hidden=true;speed.setAttribute('aria-expanded','false');}
+ function openSpeedMenu(){speedMenu.hidden=false;speed.setAttribute('aria-expanded','true');}
  const setPlay=()=>{const playing=!audio.paused;play.innerHTML=icon(playing?'pause':'play');play.setAttribute('aria-label',playing?'Pause':'Play');play.title=playing?'Pause':'Play'};
  function loadSegment(i,autoplay=false,position=0){if(!segments[i])return;segIndex=i;audio.src=segments[i].src;audio.currentTime=Math.max(0,segments[i].from+position);if(autoplay)audio.play().catch(()=>{})}
  function globalTime(){let t=segElapsed;for(let i=0;i<segIndex;i++)t+=segments[i].duration;return t}
@@ -232,7 +238,10 @@ async function setupReader(plan,d,index,saved,initialBookmark){
  seek.oninput=()=>setGlobalTime(Number(seek.value),false);
  document.querySelector('#back10').onclick=()=>setGlobalTime(globalTime()-10,!audio.paused);
  document.querySelector('#forward10').onclick=()=>setGlobalTime(globalTime()+10,!audio.paused);
- speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';safeSet(KEY+'speed',rate)};
+ setSpeed(rate);
+speed.onclick=()=>speedMenu.hidden?openSpeedMenu():closeSpeedMenu();
+speedOptions.forEach(option=>option.onclick=()=>{setSpeed(option.dataset.speed);closeSpeedMenu();});
+document.addEventListener('click',e=>{if(!e.target.closest('.speed-control'))closeSpeedMenu();},{once:false});
  const bookmark=document.querySelector('#bookmark');bookmark.classList.remove('active');bookmark.innerHTML=icon('bookmark');bookmark.setAttribute('aria-label','Save this page');bookmark.title='Save this page';
  const listToggle=document.querySelector('#bookmark-list-toggle'),listPanel=document.querySelector('#bookmark-list-panel'),countEl=document.querySelector('#bookmark-count');
  function refreshBookmarks(){const list=getBookmarks(plan,d);countEl.textContent=list.length?'('+list.length+')':'';listPanel.innerHTML=list.length?list.map(p=>'<button type="button" class="saved-page" data-page="'+p+'">Page '+p+' <span>Open</span></button>').join(''):'<p class="no-saved-pages">No saved pages yet.</p>';listPanel.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>{const page=Number(b.dataset.page);document.querySelector('.pdf-page[data-page="'+page+'"]')?.scrollIntoView({behavior:'smooth',block:'start'});listPanel.hidden=true;listToggle.setAttribute('aria-expanded','false')})}
@@ -278,7 +287,7 @@ async function renderPage(wrap){
 }
 function openingPage(){
  const chosen=planId();
- const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'One portion each day':p.count===14?'A gentler two-week pace':'A steady four-week pace')+'</small></span><span class="plan-choice-arrow">→</span></a>').join('');
+ const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'One portion each day':p.count===14?'A gentler two-week pace':'A steady four-week pace')+'</small><em class="plan-time">'+planDailyTime(p.id)+'/day</em></span><span class="plan-choice-arrow">→</span></a>').join('');
  document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A quiet, consistent path through the Qur’an</p></header><section class="opening-content"><p class="eyebrow">BEGIN YOUR KHATM</p><h1>Choose your reading plan</h1><div class="motivation-card first-time-motivation"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>A short reminder will appear here the first time you open the app. Your video can be added later without changing the rest of the experience.</p><div class="motivation-placeholder"><span>Qur’an reminder</span></div></div><p class="opening-copy">Choose a pace that works for you. You can change your plan at any time.</p><div class="plan-choices">'+choices+'</div></section></main>';
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
  const motivation=document.querySelector('.first-time-motivation'); if(motivation && safeGet(PLAN_CHOSEN,false)) motivation.hidden=true;
