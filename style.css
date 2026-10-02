@@ -248,3 +248,14 @@ html[data-theme=dark] .motivation-placeholder{background:#1d2b30}
 .player-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
 @media(max-width:680px){.topbar{min-height:64px;padding-left:6px;padding-right:6px;}.back{font-size:.88rem;padding-left:2px;}.back span{display:inline;}.topbar-actions{gap:4px;}.topbar-offline{width:40px;height:40px;}.progress-line{top:64px;}.player-label{font-size:.61rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:0;}}
 @media(max-width:430px){.back{font-size:.8rem;gap:4px;}.topbar-offline{width:38px;height:38px;}.player-label{font-size:.58rem;}}
+
+/* Daily portion tiles: spacious weekly grid, compact multiweek journey */
+.day-grid,.long-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;}
+.day-card{min-height:108px;padding:15px 14px;}
+@media(min-width:681px){
+  .day-grid.long-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+}
+@media(max-width:680px){
+  .day-grid,.long-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+  .day-card{min-height:100px;padding:13px 12px;}
+}
