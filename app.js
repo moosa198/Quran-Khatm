@@ -1,12 +1,12 @@
 (() => {
 const DAYS=[
- {key:'friday',name:'Friday',number:'01',pages:[2,147],audio:'audio/friday.mp3',duration:5062},
- {key:'saturday',name:'Saturday',number:'02',pages:[147,288],audio:'audio/saturday.mp3',duration:4769},
- {key:'sunday',name:'Sunday',number:'03',pages:[288,393],audio:'audio/sunday.mp3',duration:3648},
- {key:'monday',name:'Monday',number:'04',pages:[393,511],audio:'audio/monday.mp3',duration:3721},
- {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],audio:'audio/tuesday.mp3',duration:2976},
- {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],audio:'audio/wednesday.mp3',duration:3335},
- {key:'thursday',name:'Thursday',number:'07',pages:[721,849],audio:'audio/thursday.mp3',duration:4022}
+ {key:'friday',name:'Friday',number:'01',pages:[2,147],audio:'audio/friday.mp3',duration:3524},
+ {key:'saturday',name:'Saturday',number:'02',pages:[147,288],audio:'audio/saturday.mp3',duration:5354},
+ {key:'sunday',name:'Sunday',number:'03',pages:[288,393],audio:'audio/sunday.mp3',duration:4011},
+ {key:'monday',name:'Monday',number:'04',pages:[393,511],audio:'audio/monday.mp3',duration:4008},
+ {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],audio:'audio/tuesday.mp3',duration:3279},
+ {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],audio:'audio/wednesday.mp3',duration:3235},
+ {key:'thursday',name:'Thursday',number:'07',pages:[721,849],audio:'audio/thursday.mp3',duration:3502}
 ];
 const KEY='weeklyQuran:';
 const dayByKey=k=>DAYS.find(d=>d.key===k)||DAYS[0];
