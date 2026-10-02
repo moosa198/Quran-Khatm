@@ -16,7 +16,21 @@ const todayKey=()=>['sunday','monday','tuesday','wednesday','thursday','friday',
 const getTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode'})}
 function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
-function install(){let prompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;document.querySelector('#install-note')?.removeAttribute('hidden')});document.querySelector('#install')?.addEventListener('click',async()=>{if(prompt){await prompt.prompt();prompt=null}else alert('Use your browser menu and choose Install app or Add to Home Screen.')})}
+function install(){
+ let prompt=null;
+ const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
+ const standalone=matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ if(standalone){note?.setAttribute('hidden','');return}
+ note?.removeAttribute('hidden');
+ const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ if(isiOS&&textEl)textEl.textContent='On iPhone or iPad: Share → Add to Home Screen.';
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent='Install the Qur’an reader on your device.'});
+ button?.addEventListener('click',async()=>{
+  if(prompt){await prompt.prompt();prompt=null;return}
+  if(isiOS){alert('On iPhone or iPad, tap Share, then choose “Add to Home Screen”.')}
+  else{alert('Open your browser menu and choose “Install app” or “Add to Home Screen”.')}
+ });
+}
 function home(){
  const today=todayKey(), saved=safeGet(KEY+'last'), continueDay=saved?.day?dayByKey(saved.day):dayByKey(today), marks=safeGet(KEY+'bookmarks',{});
  document.querySelector('#app').innerHTML=`
@@ -39,7 +53,7 @@ function home(){
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
    <div class="bookmark-list">${DAYS.filter(d=>marks[d.key]).map(d=>`<a href="#read/${d.key}">Page ${marks[d.key]} <span>${d.name}</span><b>${icon('next')}</b></a>`).join('')}</div>
   </section>
-  <section class="install-note" id="install-note" hidden><span><b>Install the reader</b><small>Quick access to your weekly Qur’an reader.</small></span><button id="install">Install</button></section>
+  <section class="install-note" id="install-note"><span><b>Install the reader</b><small id="install-text">Add it to your home screen for quick access.</small></span><button id="install">Install</button></section>
  </main>`;
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');install();
 }
