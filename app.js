@@ -40,7 +40,8 @@ function todayIndex(plan){
  const now=new Date(),weekday=(now.getDay()+2)%7; // Friday is day zero.
  const friday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-weekday);
  const anchor=new Date(2026,0,2); // A Friday anchor for repeating multi-week cycles.
- const weeks=Math.floor((friday-anchor)/604800000);
+ const calendarDays=Math.round((Date.UTC(friday.getFullYear(),friday.getMonth(),friday.getDate())-Date.UTC(anchor.getFullYear(),anchor.getMonth(),anchor.getDate()))/86400000);
+ const weeks=Math.floor(calendarDays/7);
  const cycleWeek=((weeks%Math.ceil(plan.cycleDays/7))+Math.ceil(plan.cycleDays/7))%Math.ceil(plan.cycleDays/7);
  return cycleWeek*7+weekday;
 }
@@ -50,7 +51,7 @@ function portionFromRoute(plan,raw){
 }
 const prefersDark=()=>window.matchMedia?window.matchMedia('(prefers-color-scheme:dark)').matches:false;
 const getTheme=()=>document.documentElement.dataset.theme||(prefersDark()?'dark':'light');
-function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode'})}
+function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode';b.textContent=icon(t==='dark'?'sun':'moon')})}
 function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
 function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id);safeSet(PLAN_CHOSEN,true)}
 function install(){
