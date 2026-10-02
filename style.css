@@ -159,3 +159,72 @@ html[data-theme=dark] .motivation-video{background:#111}
  .dua-card{margin-top:19px}
  .motivation-card{padding:14px}
 }
+
+/* Compact habit dashboard: keep the full daily journey visible early */
+.home{max-width:980px;padding-top:24px;padding-bottom:45px}
+.home-header{margin-bottom:18px;position:relative}
+.home-header .theme-btn{position:absolute;right:0;top:-2px}
+.plan-change{margin:0 0 13px;padding-bottom:9px;font-size:.72rem}
+.hero-actions{margin-bottom:17px}
+.action-card{min-height:62px;padding:12px 14px}
+.action-card b{font-size:.84rem}
+.action-card small{font-size:.68rem}
+.journey-summary{margin:0 0 15px;padding:0 2px 9px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.journey-summary>div:first-child{display:flex;align-items:baseline;gap:7px;white-space:nowrap}
+.journey-label{font-size:.68rem;margin:0}
+.journey-summary strong{font-size:.83rem}
+.journey-summary small{font-size:.64rem}
+.journey-track{height:3px;flex:1;margin:0;min-width:55px}
+.day-section .section-heading{margin-bottom:7px}
+.section-heading span{font-size:.78rem}
+.section-heading small{font-size:.64rem}
+.day-grid,.long-grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day-card{min-height:62px;padding:8px 7px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:3px;border-radius:7px;position:relative}
+.day-no{font-size:.67rem}
+.day-copy{width:100%}
+.day-copy b{font-size:.72rem;line-height:1.1;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-copy small{font-size:.57rem;line-height:1.1;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-card .chevron{position:absolute;right:5px;top:5px;font-size:.72rem;opacity:.55}
+.day-card .day-actions{width:100%;display:block}
+.untick-btn{position:absolute;right:4px;bottom:4px;border:0;background:transparent;color:var(--muted);font-size:.55rem;padding:2px 3px;cursor:pointer}
+.untick-btn:hover{color:var(--green)}
+.day-card.completed .day-copy{opacity:.82}
+.priority-note{margin-top:18px;padding:11px 2px;font-size:.7rem}
+.priority-note small{font-size:.64rem}
+.completion-panel{z-index:60}
+.home-theme-link{display:none}
+@media(max-width:680px){
+ .home{padding:18px 12px 40px}
+ .home-header{margin-bottom:13px}
+ .bismillah{font-size:.9rem}
+ .arabic-title{font-size:1.55rem}
+ .hero-actions{margin-bottom:12px}
+ .action-card{min-height:57px;padding:10px 9px;gap:7px}
+ .action-icon{font-size:1rem}
+ .action-card b{font-size:.72rem}
+ .action-card small{font-size:.6rem}
+ .journey-summary{margin-bottom:11px;padding-bottom:7px;gap:7px}
+ .journey-summary>div:first-child{gap:4px}
+ .journey-label{font-size:.59rem}
+ .journey-summary strong{font-size:.72rem}
+ .journey-summary small{font-size:.55rem}
+ .day-grid,.long-grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+ .day-card{min-height:55px;padding:6px 5px;border-radius:6px}
+ .day-no{font-size:.61rem}
+ .day-copy b{font-size:.61rem}
+ .day-copy small{font-size:.48rem}
+ .day-card .chevron{display:none}
+ .untick-btn{font-size:.45rem;right:2px;bottom:2px}
+ .priority-note{margin-top:12px;padding-top:8px}
+ .priority-note small{font-size:.57rem}
+ .priority-mark{display:none}
+}
+@media(max-width:430px){
+ .home{padding-left:9px;padding-right:9px}
+ .day-grid,.long-grid{gap:3px}
+ .day-card{min-height:52px;padding:5px 4px}
+ .day-copy b{font-size:.56rem}
+ .day-copy small{font-size:.43rem}
+ .journey-summary small{display:none}
+ .plan-change{font-size:.65rem}
+}
