@@ -60,7 +60,7 @@ function scheduleSelector(plan){
  return '<div class="schedule-selector" role="group" aria-label="Reading schedule">'+Object.values(PLANS).map(p=>'<button class="schedule-option '+(p.id===plan.id?'active':'')+'" data-plan="'+p.id+'">'+p.name+'</button>').join('')+'</div>';
 }
 function home(){
- const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{});
+ const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{})||{};
  document.querySelector('#app').innerHTML=`
  <main class="home">
   <header class="home-header">
@@ -92,7 +92,7 @@ function home(){
 }
 function reader(planIdValue,key){
  setPlan(planIdValue);
- const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index],saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{}),mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
+ const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index],saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{})||{},mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
  const hasPdf=!!d.pdf;
  document.querySelector('#app').innerHTML=`
  <div class="reader">
@@ -132,7 +132,7 @@ function reader(planIdValue,key){
 function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
-function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{}),key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
+function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
 async function saveOffline(d){const button=document.querySelector('#offline');if(!('caches'in window)){toast('Offline saving is not supported here.');return}button.disabled=true;button.classList.add('active');button.textContent='Saving…';try{const cache=await caches.open('quran-offline-v1');const pdfs=d.pdf?[d.pdf]:[...new Set(d.audioSegments.map(s=>weeklyByKey(s.day).pdf))];await Promise.all([...pdfs.map(p=>cache.add(new Request(p))),...d.audioSegments.map(s=>cache.add(new Request(s.src,{credentials:'same-origin'})))]);button.textContent='Saved offline';toast(d.label+' saved for offline use')}catch(e){button.classList.remove('active');button.textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}button.disabled=false}
 async function setupReader(plan,d,index,saved,initialBookmark){
  const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time'),segments=d.audioSegments||[],total=segments.reduce((a,s)=>a+s.duration,0);
@@ -193,5 +193,12 @@ function route(){
  const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
  if(m){const p=buildPlan(m[1]),raw=m[2];reader(m[1],raw);return}home();
 }
-window.addEventListener('hashchange',route);route();
+window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);showBootError?.(e)}});
+function showBootError(error){
+ const app=document.querySelector('#app');
+ if(!app)return;
+ console.error("Qur'an Khatm boot error:",error);
+ app.innerHTML='<div style="padding:32px;max-width:560px;margin:auto;font-family:system-ui,sans-serif;text-align:center"><h2>Qur\'an Khatm</h2><p>The reader encountered an error while loading.</p><p style="font-size:13px;opacity:.7;word-break:break-word">'+String(error?.message||error).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</p><button onclick="location.reload()">Reload</button></div>';
+}
+try{route()}catch(e){showBootError(e)}
 })();
