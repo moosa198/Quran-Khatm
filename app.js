@@ -84,7 +84,7 @@ function planHome(){
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Current cycle'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?' · '+d.part+'/'+d.factor:''}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
@@ -103,7 +103,7 @@ function reader(planIdValue,key){
  <div class="reader">
   <header class="topbar">
    <a class="back" href="#home">${icon('back')}<span>Home</span></a>
-   <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?' · '+d.part+'/'+d.factor:''}</small></div>
+   <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}</small></div>
    <button data-theme-toggle class="icon-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
   </header>
   <div class="reader-nav">
@@ -207,12 +207,25 @@ function openingPage(){
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
 }
 function route(){
- if(location.hash==='#choose'){openingPage();return}
- if(location.hash==='#home'){planHome();return}
- const planMatch=location.hash.match(/^#plan\/(weekly|biweekly|fourweekly)$/);
+ const hash=decodeURIComponent(location.hash||'');
+ if(hash==='#choose'){openingPage();return}
+ if(hash==='#home'){planHome();return}
+ const planMatch=hash.match(/^#plan\/(weekly|biweekly|fourweekly)$/);
  if(planMatch){setPlan(planMatch[1]);planHome();return}
- const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
- if(m){reader(m[1],m[2]);return}
+ const m=hash.match(/^#read\/(weekly|biweekly|fourweekly)\/([a-z]+(?:-\d+)?)$/);
+ if(m){
+  const validKey=m[1]==='weekly'?/^(friday|saturday|sunday|monday|tuesday|wednesday|thursday)$/.test(m[2]):new RegExp('^'+m[1]+'-\\d+
+window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);showBootError?.(e)}});
+function showBootError(error){
+ const app=document.querySelector('#app');
+ if(!app)return;
+ console.error("Qur'an Khatm boot error:",error);
+ app.innerHTML='<div style="padding:32px;max-width:560px;margin:auto;font-family:system-ui,sans-serif;text-align:center"><h2>Qur\'an Khatm</h2><p>The reader encountered an error while loading.</p><p style="font-size:13px;opacity:.7;word-break:break-word">'+String(error?.message||error).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</p><button onclick="location.reload()">Reload</button></div>';
+}
+try{route()}catch(e){showBootError(e)}
+})();).test(m[2]);
+  if(validKey){reader(m[1],m[2]);return}
+ }
  if(safeGet(PLAN_CHOSEN,false)||safeGet(KEY+'last')){planHome();return}openingPage();
 }
 window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);showBootError?.(e)}});
