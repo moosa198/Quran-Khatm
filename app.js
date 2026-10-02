@@ -117,11 +117,13 @@ function planHome(){
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
    <div class="bookmark-list">${plan.portions.flatMap(d=>{const raw=marks[plan.id+':'+d.key],pages=Array.isArray(raw)?raw:raw?[raw]:[];return pages.map(page=>`<a href="#read/${plan.id}/${d.key}">Page ${page} <span>${d.label}</span><b>${icon('next')}</b></a>`)}).join('')}</div>
   </section>
-  <section class="priority-note">
-   <span><b>Keep the Qur'an close</b><small>For an easier habit, add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
+  <section class="priority-note" id="install-note">
+   <span><b>Keep the Qur'an close</b><small id="install-text">Add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
+   <button class="install-btn" id="install" type="button">Add to Home Screen</button>
    <span class="priority-mark" aria-hidden="true">القرآن</span>
   </section>
  </main>`;
+ install();
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
  document.querySelectorAll('[data-untick]').forEach(b=>b.onclick=(e)=>{e.preventDefault();e.stopPropagation();unmarkCompleted(plan.id,b.dataset.untick);planHome();});
 }
