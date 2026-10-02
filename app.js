@@ -52,7 +52,7 @@ function install(){
  const standalone=matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;if(standalone){note?.setAttribute('hidden','');return}
  note?.removeAttribute('hidden');const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
  if(isiOS&&textEl)textEl.textContent='On iPhone or iPad: Share → Add to Home Screen.';
- window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent='Install the Qur’an reader on your device.'});
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent='Install Qur'an Khatm on your device.'});
  button?.addEventListener('click',async()=>{if(prompt){await prompt.prompt();prompt=null;return}if(isiOS)alert('On iPhone or iPad, tap Share, then choose “Add to Home Screen”.');else alert('Open your browser menu and choose “Install app” or “Add to Home Screen”.')});
 }
 function scheduleSelector(plan){
@@ -84,7 +84,7 @@ function home(){
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
    <div class="bookmark-list">${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/${plan.id}/${d.key}">Page ${m} <span>${d.label}</span><b>${icon('next')}</b></a>`:''}).join('')}</div>
   </section>
-  <section class="install-note" id="install-note"><span><b>Install the reader</b><small id="install-text">Add it to your home screen for quick access.</small></span><button id="install">Install</button></section>
+  <section class="install-note" id="install-note"><span><b>Install the reader</b><small id="install-text">Add Qur'an Khatm to your home screen for quick access.</small></span><button id="install">Install</button></section>
  </main>`;
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
  document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{setPlan(b.dataset.plan);location.hash='';route()});install();
