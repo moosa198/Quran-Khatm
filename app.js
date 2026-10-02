@@ -146,7 +146,7 @@ function reader(planIdValue,key){
   </div>
   <div class="reader-bookmarks"><button id="bookmark-list-toggle" type="button" aria-expanded="false">Saved pages <span id="bookmark-count"></span>⌄</button><div id="bookmark-list-panel" hidden></div></div>
   <div class="progress-line" aria-hidden="true"><span id="reading-progress"></span></div>
-  <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading" aria-label="Loading pages"><span class="loading-mark" aria-hidden="true"></span></div></section>
+  <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading" role="status">Preparing pages…</div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <section class="completion-panel" id="completion-panel" hidden></section>
   <div class="audio-player">
