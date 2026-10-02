@@ -328,3 +328,45 @@ html[data-theme=dark] .motivation-placeholder{background:#1d2b30}
  .day-copy b{font-size:.88rem;}
  .day-copy small{font-size:.64rem;}
 }
+
+/* Final home accessibility scale: larger type without increasing visual density */
+.day-copy b{font-size:1.05rem;line-height:1.3;}
+.day-copy small{font-size:.8rem;line-height:1.4;}
+.day-no{font-size:.8rem;}
+.section-heading span{font-size:.94rem;}
+.section-heading small{font-size:.76rem;}
+.action-card b{font-size:1rem;}
+.action-card small{font-size:.8rem;}
+.journey-label{font-size:.76rem;}
+.journey-summary strong{font-size:1rem;}
+.journey-summary small{font-size:.74rem;}
+.plan-change{font-size:.88rem;}
+.plan-change a{font-size:.9rem;}
+.priority-note b{font-size:.9rem;}
+.priority-note small{font-size:.75rem;}
+
+@media(max-width:680px){
+  .day-card{min-height:108px;padding:13px 12px;}
+  .day-no{font-size:.8rem;}
+  .day-copy b{font-size:1rem;line-height:1.3;}
+  .day-copy small{font-size:.78rem;line-height:1.4;margin-top:5px;}
+  .action-card b{font-size:.92rem;}
+  .action-card small{font-size:.75rem;line-height:1.4;}
+  .section-heading span{font-size:.9rem;}
+  .section-heading small{font-size:.72rem;}
+  .journey-label{font-size:.7rem;}
+  .journey-summary strong{font-size:.94rem;}
+  .journey-summary small{font-size:.68rem;}
+  .plan-change{font-size:.82rem;}
+  .plan-change a{font-size:.84rem;}
+  .priority-note b{font-size:.86rem;}
+  .priority-note small{font-size:.7rem;line-height:1.5;}
+}
+@media(max-width:430px){
+  .day-card{min-height:104px;padding:12px 10px;}
+  .day-no{font-size:.78rem;}
+  .day-copy b{font-size:.96rem;}
+  .day-copy small{font-size:.75rem;}
+  .action-card b{font-size:.88rem;}
+  .action-card small{font-size:.72rem;}
+}
