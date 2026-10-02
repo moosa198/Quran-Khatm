@@ -102,8 +102,8 @@ function planHome(){
   </header>
   <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#choose">Change plan</a></div>
   <section class="hero-actions">
-   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>${todayPortion.label}</small></span></a>
+   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''} · ${habitTime(continuePortion.duration)}</small></span></a>
+   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
   </section>
   <section class="journey-summary">
    <div><span class="journey-label">Your khatm</span><strong>${done} of ${plan.portions.length}</strong><small>portions completed</small></div>
@@ -111,7 +111,7 @@ function planHome(){
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your journey'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Mark ${d.label} incomplete">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small><em class="habit-time">${habitTime(d.duration)}</em></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Mark ${d.label} incomplete">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
@@ -211,7 +211,7 @@ function setupDaySwipe(plan,index){
  surface.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});
  surface.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.35)return;const target=dx<0?plan.portions[index+1]:plan.portions[index-1];if(target)location.hash='#read/'+plan.id+'/'+target.key},{passive:true});
 }
-function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
+function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}\nfunction habitTime(s){const minutes=Math.max(1,Math.round(Number(s||0)/60));if(minutes<60)return '≈ '+minutes+' min';const hours=Math.floor(minutes/60),mins=minutes%60;if(mins<10)return '≈ '+hours+' hr';return '≈ '+hours+'½ hr'}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
 function getBookmarks(plan,d){const raw=(safeGet(KEY+'bookmarks',{})||{})[plan.id+':'+d.key];return Array.isArray(raw)?raw.map(Number):raw?[Number(raw)]:[]}
