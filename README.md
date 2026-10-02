@@ -2,7 +2,7 @@
 
 Separate PWA for a Friday-to-Thursday weekly Qur’an reading plan, based on the Hizbul-Azam Player UX but with a distinct Mushaf Blue identity.
 
-## Revised weekly schedule
+## Weekly schedule
 
 | Day | Pages | Audio range | Duration |
 |---|---:|---:|---:|
@@ -16,27 +16,28 @@ Separate PWA for a Friday-to-Thursday weekly Qur’an reading plan, based on the
 
 The day boundaries are intentionally preserved exactly as supplied.
 
-## Media layout
+## Media
 
-Each weekly portion has its own PDF and compressed audio file:
+The repository contains the seven ready-to-use PDFs and seven compressed audio files in quran/:
 
-`quran/friday.pdf` + `audio/friday.mp3` through `thursday`.
+- quran/friday.pdf + quran/friday.mp3
+- quran/saturday.pdf + quran/saturday.mp3
+- quran/sunday.pdf + quran/sunday.mp3
+- quran/monday.pdf + quran/monday.mp3
+- quran/tuesday.pdf + quran/tuesday.mp3
+- quran/wednesday.pdf + quran/wednesday.mp3
+- quran/thursday.pdf + quran/thursday.mp3
 
-The supplied Sheikh Ahmed Dibaan recording is 7:28:33. The web audio is encoded as **48 kbps mono MP3**, reducing the full set to roughly 155 MB while retaining speech-focused audio quality. The player uses `preload="metadata"` so opening a day does not intentionally download the entire track before playback.
-
-The original Arabic-only 13-line Qur’an PDF is split into the seven ranges above. The source PDF is not committed to the repository.
+The supplied Sheikh Ahmed Dibaan recording is 7:28:33. The web audio is speech-focused, mono MP3. The player uses preload="metadata" so opening a day does not intentionally download the entire track before playback.
 
 ## Offline / PWA
 
-The service worker caches the application shell and runtime-caches same-origin media after it is requested. A day's PDF and audio can therefore become available offline after that day's files have been loaded once.
-
-PDF.js is loaded from cdnjs at runtime.
+The service worker caches the application shell and runtime-caches same-origin resources after they are requested. PDF.js is loaded from cdnjs at runtime, so full offline reading also depends on PDF.js having been available/cached by the browser.
 
 ## Deploy
 
-Enable GitHub Pages for the repository, using the `main` branch and root folder.
+Enable GitHub Pages for the repository, using the main branch and root folder.
 
 ## Local media generation
 
-- `scripts/split-pdfs.py` creates the seven day PDFs from `quran-original.pdf`.
-- `scripts/split-audio.sh` creates the seven 48 kbps mono MP3s from `source.mp3`.
+scripts/split-audio.sh can be used to regenerate the seven audio segments from the original recording. The final weekly PDFs are committed directly to the repository, so no PDF-generation script is required for the live site.
