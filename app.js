@@ -115,7 +115,7 @@ function planHome(){
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
-   <div class="bookmark-list">${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/${plan.id}/${d.key}">Page ${m} <span>${d.label}</span><b>${icon('next')}</b></a>`:''}).join('')}</div>
+   <div class="bookmark-list">${plan.portions.flatMap(d=>{const raw=marks[plan.id+':'+d.key],pages=Array.isArray(raw)?raw:raw?[raw]:[];return pages.map(page=>`<a href="#read/${plan.id}/${d.key}">Page ${page} <span>${d.label}</span><b>${icon('next')}</b></a>`)}).join('')}</div>
   </section>
   <section class="priority-note">
    <span><b>Keep the Qur'an close</b><small>For an easier habit, add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
