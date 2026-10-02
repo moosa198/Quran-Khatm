@@ -100,7 +100,7 @@ function planHome(){
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#choose">Change plan</a></div>
+  <div class="plan-change"><span>Reading plan · ${plan.name} <small>· ${planDailyTime(plan.id)}/day</small></span><a href="#choose">Change plan</a></div>
   <section class="hero-actions">
    <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''} · ${habitTime(continuePortion.duration)}</small></span></a>
    <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
