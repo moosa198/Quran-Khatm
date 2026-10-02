@@ -32,7 +32,7 @@ function audioForRange(range){
 function buildPlan(id){
  if(id==='weekly')return {id:'weekly',name:PLANS.weekly.name,cycleDays:7,portions:WEEKLY_DAYS.map((d,i)=>({...d,index:i,label:d.name,week:1,audioSegments:[{src:d.audio,from:0,to:d.duration,duration:d.duration,day:d.key}]}))};
  const p=PLANS[id]||PLANS.weekly,factor=p.count/7,portions=[];
- WEEKLY_DAYS.forEach((day,dayIndex)=>{const length=day.pages[1]-day.pages[0],bounds=Array.from({length:factor+1},(_,j)=>day.pages[0]+Math.round(j*length/factor));for(let part=0;part<factor;part++){const i=dayIndex*factor+part,range=[bounds[part],bounds[part+1]],audioSegments=audioForRange(range);portions.push({key:id+'-'+(i+1),name:day.name,number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioSegments.reduce((a,s)=>a+s.duration,0),index:i,label:day.name+' · '+(part+1)+'/'+factor,surahLabel:day.surahs,week:Math.floor(i/7)+1,part:part+1,factor,audioSegments})}});
+ WEEKLY_DAYS.forEach((day,dayIndex)=>{const length=day.pages[1]-day.pages[0],bounds=Array.from({length:factor+1},(_,j)=>day.pages[0]+Math.round(j*length/factor));for(let part=0;part<factor;part++){const i=dayIndex*factor+part,range=[bounds[part],bounds[part+1]],audioSegments=audioForRange(range);portions.push({key:id+'-'+(i+1),name:day.name,number:String(i+1).padStart(2,'0'),pages:range,pdf:null,audio:null,duration:audioSegments.reduce((a,s)=>a+s.duration,0),index:i,label:'Day '+(i+1),surahLabel:day.surahs,week:Math.floor(i/7)+1,part:part+1,factor,audioSegments})}});
  return {id,name:p.name,cycleDays:p.count,portions};
 }
 function getPlan(){return buildPlan(planId())}
@@ -47,7 +47,7 @@ function todayIndex(plan){
 }
 function portionFromRoute(plan,raw){
  if(plan.id==='weekly')return plan.portions.findIndex(p=>p.key===raw);
- const n=Number(raw);return Number.isInteger(n)&&n>=1&&n<=plan.portions.length?n-1:-1;
+ const match=String(raw).match(/^(?:biweekly|fourweekly)-(\d+)$/);const n=match?Number(match[1]):Number(raw);return Number.isInteger(n)&&n>=1&&n<=plan.portions.length?n-1:-1;
 }
 const prefersDark=()=>window.matchMedia?window.matchMedia('(prefers-color-scheme:dark)').matches:false;
 const getTheme=()=>document.documentElement.dataset.theme||(prefersDark()?'dark':'light');
@@ -68,7 +68,7 @@ function scheduleSelector(plan){
  return '<div class="schedule-selector" role="group" aria-label="Reading schedule">'+Object.values(PLANS).map(p=>'<button class="schedule-option '+(p.id===plan.id?'active':'')+'" data-plan="'+p.id+'">'+p.name+'</button>').join('')+'</div>';
 }
 function planHome(){
- const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{})||{};
+ const plan=getPlan(),today=todayIndex(plan),defaultIndex=plan.id==='weekly'?today:0,saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[defaultIndex],marks=safeGet(KEY+'bookmarks',{})||{};
  document.querySelector('#app').innerHTML=`
  <main class="home">
   <header class="home-header">
@@ -84,7 +84,7 @@ function planHome(){
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Current cycle'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===today?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?' · '+d.part+'/'+d.factor:''}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?' · '+d.part+'/'+d.factor:''}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
