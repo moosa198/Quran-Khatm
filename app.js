@@ -1,12 +1,12 @@
 (() => {
 const DAYS=[
- {key:'friday',name:'Friday',number:'01',pages:[2,147],audio:'audio/friday.mp3',duration:3524},
- {key:'saturday',name:'Saturday',number:'02',pages:[147,288],audio:'audio/saturday.mp3',duration:5354},
- {key:'sunday',name:'Sunday',number:'03',pages:[288,393],audio:'audio/sunday.mp3',duration:4011},
- {key:'monday',name:'Monday',number:'04',pages:[393,511],audio:'audio/monday.mp3',duration:4008},
- {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],audio:'audio/tuesday.mp3',duration:3279},
- {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],audio:'audio/wednesday.mp3',duration:3235},
- {key:'thursday',name:'Thursday',number:'07',pages:[721,849],audio:'audio/thursday.mp3',duration:3502}
+ {key:'friday',name:'Friday',number:'01',pages:[2,147],pdf:'quran/friday.pdf',audio:'audio/friday.mp3',duration:3524},
+ {key:'saturday',name:'Saturday',number:'02',pages:[147,288],pdf:'quran/saturday.pdf',audio:'audio/saturday.mp3',duration:5354},
+ {key:'sunday',name:'Sunday',number:'03',pages:[288,393],pdf:'quran/sunday.pdf',audio:'audio/sunday.mp3',duration:4011},
+ {key:'monday',name:'Monday',number:'04',pages:[393,511],pdf:'quran/monday.pdf',audio:'audio/monday.mp3',duration:4008},
+ {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],pdf:'quran/tuesday.pdf',audio:'audio/tuesday.mp3',duration:3279},
+ {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],pdf:'quran/wednesday.pdf',audio:'audio/wednesday.mp3',duration:3235},
+ {key:'thursday',name:'Thursday',number:'07',pages:[721,849],pdf:'quran/thursday.pdf',audio:'audio/thursday.mp3',duration:3502}
 ];
 const KEY='weeklyQuran:';
 const dayByKey=k=>DAYS.find(d=>d.key===k)||DAYS[0];
@@ -38,7 +38,7 @@ async function reader(key){
  document.querySelector('#app').innerHTML=`
  <div class="reader">
   <header class="topbar"><a class="back" href="#">${icon('prev')} <span>Home</span></a><div class="day-title"><b>${d.name}</b><small>Pages ${d.pages[0]}–${d.pages[1]}</small></div><button id="theme" class="icon-btn" aria-label="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button></header>
-  <div class="reader-tools"><button id="bookmark" class="tool-btn">${icon('bookmark')} <span>Bookmark</span></button><button id="focus" class="tool-btn">${icon('expand')} <span>Focus</span></button><a class="tool-btn" href="quran.pdf" download>${icon('download')} <span>PDF</span></a></div>
+  <div class="reader-tools"><button id="bookmark" class="tool-btn">${icon('bookmark')} <span>Bookmark</span></button><button id="focus" class="tool-btn">${icon('expand')} <span>Focus</span></button><a class="tool-btn" href="${d.pdf}" download>${icon('download')} <span>PDF</span></a></div>
   <div class="progress-line"><span id="reading-progress"></span></div>
   <section id="pdf-viewer" class="pdf-viewer"><div class="loading">Opening the Mushaf…</div></section>
   <div class="audio-player">
@@ -69,18 +69,18 @@ async function renderPdf(d,startPage){
  const viewer=document.querySelector('#pdf-viewer'); if(!window.pdfjsLib){viewer.innerHTML='<div class="error">PDF viewer unavailable.</div>';return}
  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  try{
-  const pdf=await pdfjsLib.getDocument('quran.pdf').promise;
-  const first=Math.max(1,d.pages[0]), last=Math.min(pdf.numPages,d.pages[1]);
+  const pdf=await pdfjsLib.getDocument(d.pdf).promise;
+  const first=Math.max(1,d.pages[0]), last=Math.min(d.pages[1],first+pdf.numPages-1);
   const pages=[];
   for(let n=first;n<=last;n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
-  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(pdf,e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'900px 0px'});
+  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(pdf,e.target,first)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'900px 0px'});
   pages.forEach(p=>observer.observe(p));
   const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;save(d,n);document.querySelector('#reading-progress').style.width=((n-first+1)/(last-first+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});
   pages.forEach(p=>progress.observe(p));
   const target=pages.find(p=>Number(p.dataset.page)===Number(startPage)); if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
- }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Make sure <b>quran.pdf</b> is in the project.</div>'}
+ }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Make sure the selected day's PDF is in the <b>quran/</b> folder.</div>'}
 }
-async function renderPage(pdf,wrap){try{const page=await pdf.getPage(Number(wrap.dataset.page));const base=page.getViewport({scale:1});wrap.style.aspectRatio=base.width+'/'+base.height;const width=Math.min(980,Math.max(280,wrap.clientWidth||760));const scale=width/base.width;const vp=page.getViewport({scale});const dpr=Math.min(devicePixelRatio||1,2);const c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
+async function renderPage(pdf,wrap,first){try{const page=await pdf.getPage(Number(wrap.dataset.page)-first+1);const base=page.getViewport({scale:1});wrap.style.aspectRatio=base.width+'/'+base.height;const width=Math.min(980,Math.max(280,wrap.clientWidth||760));const scale=width/base.width;const vp=page.getViewport({scale});const dpr=Math.min(devicePixelRatio||1,2);const c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
 function setupInstall(){let prompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;const n=document.querySelector('#install-note');if(n)n.hidden=false});const b=document.querySelector('#install');if(b)b.onclick=async()=>{if(prompt){await prompt.prompt();prompt=null}else alert('Use your browser menu and choose Install app or Add to Home Screen.')}} 
 function route(){const m=location.hash.match(/^#read\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday)$/);m?reader(m[1]):home()}
 window.addEventListener('hashchange',route);route();
