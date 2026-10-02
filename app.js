@@ -131,9 +131,15 @@ function reader(planIdValue,key){
   </div>
  </div>`;
  document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.onclick=()=>setTheme(getTheme()==='dark'?'light':'dark'));
- setupReader(plan,d,index,saved,mark);\n setupDaySwipe(plan,index);
+ setupReader(plan,d,index,saved,mark);
+ setupDaySwipe(plan,index);
 }
-function setupDaySwipe(plan,index){\n const surface=document.querySelector('#pdf-viewer');let startX=0,startY=0;\n surface.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});\n surface.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.35)return;const target=dx<0?plan.portions[index+1]:plan.portions[index-1];if(target)location.hash='#read/'+plan.id+'/'+target.key},{passive:true});\n}\nfunction fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
+function setupDaySwipe(plan,index){
+ const surface=document.querySelector('#pdf-viewer');let startX=0,startY=0;
+ surface.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});
+ surface.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.35)return;const target=dx<0?plan.portions[index+1]:plan.portions[index-1];if(target)location.hash='#read/'+plan.id+'/'+target.key},{passive:true});
+}
+function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
 function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
