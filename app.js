@@ -1,12 +1,12 @@
 (() => {
 const DAYS=[
- {key:'friday',name:'Friday',number:'01',pages:[2,147],pdf:'quran/friday.pdf',audio:'audio/friday.mp3',duration:3524},
- {key:'saturday',name:'Saturday',number:'02',pages:[147,288],pdf:'quran/saturday.pdf',audio:'audio/saturday.mp3',duration:5354},
- {key:'sunday',name:'Sunday',number:'03',pages:[288,393],pdf:'quran/sunday.pdf',audio:'audio/sunday.mp3',duration:4011},
- {key:'monday',name:'Monday',number:'04',pages:[393,511],pdf:'quran/monday.pdf',audio:'audio/monday.mp3',duration:4008},
- {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],pdf:'quran/tuesday.pdf',audio:'audio/tuesday.mp3',duration:3279},
- {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],pdf:'quran/wednesday.pdf',audio:'audio/wednesday.mp3',duration:3235},
- {key:'thursday',name:'Thursday',number:'07',pages:[721,849],pdf:'quran/thursday.pdf',audio:'audio/thursday.mp3',duration:3502}
+ {key:'friday',name:'Friday',number:'01',pages:[2,147],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
+ {key:'saturday',name:'Saturday',number:'02',pages:[147,288],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
+ {key:'sunday',name:'Sunday',number:'03',pages:[288,393],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
+ {key:'monday',name:'Monday',number:'04',pages:[393,511],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
+ {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
+ {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
+ {key:'thursday',name:'Thursday',number:'07',pages:[721,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
 const KEY='weeklyQuran:';
 const dayByKey=k=>DAYS.find(d=>d.key===k)||DAYS[0];
@@ -60,7 +60,7 @@ async function setupReader(d,saved){
  let lastSavedAudio=-1; audio.ontimeupdate=()=>{seek.value=audio.currentTime;time.textContent=fmt(audio.currentTime);const bucket=Math.floor(audio.currentTime/5);if(bucket!==lastSavedAudio){lastSavedAudio=bucket;localStorage.setItem(KEY+'audio:'+d.key,audio.currentTime)}};
  audio.onloadedmetadata=()=>{const p=Number(localStorage.getItem(KEY+'audio:'+d.key)||0);if(p>2&&p<audio.duration-2)audio.currentTime=p};
  seek.oninput=()=>{audio.currentTime=Number(seek.value)};
- audio.onerror=()=>{const label=document.querySelector('.player-label');if(label)label.textContent='Audio unavailable — make sure the selected MP3 is in the audio/ folder.'}; speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';localStorage.setItem(KEY+'speed',rate)};
+ audio.onerror=()=>{const label=document.querySelector('.player-label');if(label)label.textContent='Audio unavailable — make sure the selected MP3 is in the quran/ folder.'}; speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';localStorage.setItem(KEY+'speed',rate)};
  document.querySelector('#bookmark').onclick=()=>{const p=window.currentQuranPage||d.pages[0];save(d,p);document.querySelector('#bookmark').classList.add('active')};
  document.querySelector('#focus').onclick=()=>document.documentElement.requestFullscreen?.();
  await renderPdf(d,saved?.day===d.key?saved.page:d.pages[0]);
@@ -78,10 +78,10 @@ async function renderPdf(d,startPage){
   const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;save(d,n);document.querySelector('#reading-progress').style.width=((n-first+1)/(last-first+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});
   pages.forEach(p=>progress.observe(p));
   const target=pages.find(p=>Number(p.dataset.page)===Number(startPage)); if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
- }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Make sure the selected day's PDF is in the <b>quran/</b> folder.</div>'}
+ }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Make sure the selected day\'s PDF is in the <b>quran/</b> folder.</div>'}
 }
 async function renderPage(pdf,wrap,first){try{const page=await pdf.getPage(Number(wrap.dataset.page)-first+1);const base=page.getViewport({scale:1});wrap.style.aspectRatio=base.width+'/'+base.height;const width=Math.min(980,Math.max(280,wrap.clientWidth||760));const scale=width/base.width;const vp=page.getViewport({scale});const dpr=Math.min(devicePixelRatio||1,2);const c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
-function setupInstall(){let prompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;const n=document.querySelector('#install-note');if(n)n.hidden=false});const b=document.querySelector('#install');if(b)b.onclick=async()=>{if(prompt){await prompt.prompt();prompt=null}else alert('Use your browser menu and choose Install app or Add to Home Screen.')}} 
+function setupInstall(){let prompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;const n=document.querySelector('#install-note');if(n)n.hidden=false});const b=document.querySelector('#install');if(b)b.onclick=async()=>{if(prompt){await prompt.prompt();prompt=null}else alert('Use your browser menu and choose Install app or Add to Home Screen.')}}
 function route(){const m=location.hash.match(/^#read\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday)$/);m?reader(m[1]):home()}
 window.addEventListener('hashchange',route);route();
 })();
