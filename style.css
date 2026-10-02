@@ -22,3 +22,75 @@ html[data-theme=dark] .plan-choice{background:var(--darkpage);border-color:var(-
 html[data-theme=dark] .plan-choice.selected,html[data-theme=dark] .plan-choice:hover{border-color:#718f8b;background:#202f34}
 html[data-theme=dark] .plan-change{border-color:var(--darkline)}
 @media(max-width:680px){.opening{padding:35px 18px 45px;justify-content:flex-start}.opening .home-header{margin:6vh 0 8vh}.opening-content{margin:auto 0}.plan-choice{padding:15px}.plan-change{margin-top:-8px}}
+
+/* Readability and touch-target refinements */
+.icon-btn{display:grid;place-items:center;position:relative;z-index:25;min-width:44px;min-height:44px;padding:0;line-height:1;font-size:1.2rem;touch-action:manipulation}
+.theme-btn{right:0;top:0}
+.home{max-width:900px;padding-top:clamp(34px,6vh,60px)}
+.hero-actions{gap:0;margin-bottom:38px}
+.action-card{min-height:86px;padding:20px 18px;gap:15px}
+.action-icon{font-size:1.3rem;flex:0 0 auto}
+.action-card b{font-size:1rem;line-height:1.35}
+.action-card small{font-size:.82rem;line-height:1.45}
+.section-heading span{font-size:1rem}
+.section-heading small{font-size:.78rem}
+.day-grid{gap:11px}
+.day-card{min-height:102px;padding:16px 15px}
+.day-no{font-size:.78rem}
+.day-copy b{font-size:1rem;line-height:1.35}
+.day-copy small{font-size:.8rem;line-height:1.45;margin-top:5px}
+.chevron{font-size:1.4rem}
+.plan-change{font-size:.88rem}
+.plan-change a{padding:10px 12px;font-size:.9rem}
+.bookmark-list a{font-size:.88rem;padding:14px 3px}
+.install-note{padding:17px 0}
+.install-note b{font-size:.92rem}
+.install-note small{font-size:.8rem;line-height:1.45}
+.install-note button{min-height:42px;padding:9px 17px;font-size:.88rem}
+.install-note[hidden]{display:none!important}
+.topbar{min-height:64px}
+.back,.nav-day{font-size:.9rem;min-height:44px}
+.day-title b{font-size:1rem}
+.day-title small{font-size:.77rem;line-height:1.4}
+.reader-nav{padding-top:12px;padding-bottom:8px}
+.page-jump label{font-size:.78rem}
+.page-jump input{height:22px;cursor:pointer}
+.reader-tools{padding-bottom:10px}
+.tool-btn{min-height:40px;padding:8px 13px;font-size:.82rem}
+.audio-player{padding-top:11px;padding-bottom:max(11px,env(safe-area-inset-bottom))}
+.player-main{grid-template-columns:44px 44px minmax(100px,1fr) 44px 48px 42px;gap:8px}
+.play-btn{width:44px;height:44px;font-size:1.1rem}
+.mini-btn,.speed{height:40px;font-size:.78rem}
+.audio-bookmark{height:40px;width:42px;font-size:1.2rem}
+.time-row{font-size:.72rem}
+.track input{height:22px}
+.player-label{font-size:.72rem;margin-left:52px}
+.loading{padding:50px}
+.loading-mark{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:reader-spin .8s linear infinite}
+@keyframes reader-spin{to{transform:rotate(360deg)}}
+.plan-choice{min-height:76px;padding:18px 19px}
+.plan-choice-main b{font-size:1.02rem}
+.plan-choice-main small{font-size:.82rem}
+.opening-copy{font-size:.92rem}
+@media(max-width:680px){
+ .home{padding:26px 16px 60px}
+ .action-card{min-height:82px;padding:15px 12px;gap:9px}
+ .action-card b{font-size:.92rem}
+ .action-card small{font-size:.75rem}
+ .day-card{min-height:98px;padding:13px}
+ .day-copy b{font-size:.95rem}
+ .day-copy small{font-size:.75rem}
+ .player-main{grid-template-columns:42px 38px minmax(65px,1fr) 38px 40px 38px;gap:5px}
+ .play-btn{width:40px;height:40px}
+ .mini-btn,.speed,.audio-bookmark{height:38px}
+ .audio-bookmark{width:38px}
+ .player-label{font-size:.65rem}
+ .icon-btn{min-width:44px;min-height:44px}
+}
+@media(max-width:430px){
+ .player-main{grid-template-columns:40px 34px minmax(52px,1fr) 34px 38px 36px;gap:3px}
+ .mini-btn,.speed{font-size:.68rem}
+ .audio-bookmark{width:36px}
+ .player-label{display:block;font-size:.59rem}
+ .day-copy small{font-size:.7rem}
+}
