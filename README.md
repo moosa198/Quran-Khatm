@@ -1,8 +1,12 @@
-# Weekly Qur’an Reading
+# Qur'an Khatm
 
-Separate PWA for a Friday-to-Thursday weekly Qur’an reading plan, based on the Hizbul-Azam Player UX but with a distinct Mushaf Blue identity.
+PWA for completing the Qur'an through flexible Khatm reading schedules, based on the Hizbul-Azam Player UX but with a distinct Mushaf Blue identity.
 
-## Weekly schedule
+## Available Khatm schedules
+
+The app supports 1-week, 2-week and 4-week Khatm schedules. The original Friday-to-Thursday schedule remains the 1-week option.
+
+### 1-week schedule
 
 | Day | Pages | Audio range | Duration |
 |---|---:|---:|---:|
