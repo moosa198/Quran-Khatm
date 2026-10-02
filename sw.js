@@ -1,7 +1,8 @@
-const VERSION='quran-v7';
+const VERSION='quran-v8';
 const SHELL=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./icons/mushaf.svg'];
 const CDN='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 const OFFLINE='quran-offline-v1';
+const SHELL_PATHS=new Set(SHELL.map(p=>new URL(p,self.location).pathname));
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==VERSION&&k!==OFFLINE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 async function rangeFromCache(request){
@@ -26,7 +27,7 @@ self.addEventListener('fetch',e=>{
    return;
  }
  if(u.origin!==location.origin&&!u.href.startsWith(CDN))return;
- const isShell=/^https?:\\/\\/[^/]+\\/(?:index\\.html|app\\.js|style\\.css|manifest\\.webmanifest|sw\\.js)?(?:\\?.*)?$/.test(e.request.url) || e.request.mode==='navigate';
+ const isShell=SHELL_PATHS.has(u.pathname) || e.request.mode==='navigate';
  if(isShell){
    e.respondWith(fetch(e.request).then(r=>{
      if(r.ok||r.type==='opaque')caches.open(VERSION).then(c=>c.put(e.request,r.clone())).catch(()=>{});
