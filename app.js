@@ -57,10 +57,10 @@ async function setupReader(d,saved){
  let rate=Number(localStorage.getItem(KEY+'speed')||1); if(![1,1.5,2].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';
  play.onclick=()=>audio.paused?audio.play().catch(()=>{}):audio.pause();
  audio.onplay=()=>play.textContent=icon('pause'); audio.onpause=()=>play.textContent=icon('play');
- audio.ontimeupdate=()=>{seek.value=audio.currentTime;time.textContent=fmt(audio.currentTime);if(Math.floor(audio.currentTime)%5===0)localStorage.setItem(KEY+'audio:'+d.key,audio.currentTime)};
+ let lastSavedAudio=-1; audio.ontimeupdate=()=>{seek.value=audio.currentTime;time.textContent=fmt(audio.currentTime);const bucket=Math.floor(audio.currentTime/5);if(bucket!==lastSavedAudio){lastSavedAudio=bucket;localStorage.setItem(KEY+'audio:'+d.key,audio.currentTime)}};
  audio.onloadedmetadata=()=>{const p=Number(localStorage.getItem(KEY+'audio:'+d.key)||0);if(p>2&&p<audio.duration-2)audio.currentTime=p};
  seek.oninput=()=>{audio.currentTime=Number(seek.value)};
- speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';localStorage.setItem(KEY+'speed',rate)};
+ audio.onerror=()=>{const label=document.querySelector('.player-label');if(label)label.textContent='Audio unavailable — make sure the selected MP3 is in the audio/ folder.'}; speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';localStorage.setItem(KEY+'speed',rate)};
  document.querySelector('#bookmark').onclick=()=>{const p=window.currentQuranPage||d.pages[0];save(d,p);document.querySelector('#bookmark').classList.add('active')};
  document.querySelector('#focus').onclick=()=>document.documentElement.requestFullscreen?.();
  await renderPdf(d,saved?.day===d.key?saved.page:d.pages[0]);
@@ -73,14 +73,14 @@ async function renderPdf(d,startPage){
   const first=Math.max(1,d.pages[0]), last=Math.min(pdf.numPages,d.pages[1]);
   const pages=[];
   for(let n=first;n<=last;n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
-  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(!e.isIntersecting||e.target.dataset.done)return;renderPage(pdf,e.target);}),{rootMargin:'900px 0px'});
+  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(pdf,e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'900px 0px'});
   pages.forEach(p=>observer.observe(p));
   const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;save(d,n);document.querySelector('#reading-progress').style.width=((n-first+1)/(last-first+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});
   pages.forEach(p=>progress.observe(p));
   const target=pages.find(p=>Number(p.dataset.page)===Number(startPage)); if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
  }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Make sure <b>quran.pdf</b> is in the project.</div>'}
 }
-async function renderPage(pdf,wrap){try{const page=await pdf.getPage(Number(wrap.dataset.page));const base=page.getViewport({scale:1});const width=Math.min(980,Math.max(280,wrap.clientWidth||760));const scale=width/base.width;const vp=page.getViewport({scale});const dpr=Math.min(devicePixelRatio||1,2);const c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
+async function renderPage(pdf,wrap){try{const page=await pdf.getPage(Number(wrap.dataset.page));const base=page.getViewport({scale:1});wrap.style.aspectRatio=base.width+'/'+base.height;const width=Math.min(980,Math.max(280,wrap.clientWidth||760));const scale=width/base.width;const vp=page.getViewport({scale});const dpr=Math.min(devicePixelRatio||1,2);const c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
 function setupInstall(){let prompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;const n=document.querySelector('#install-note');if(n)n.hidden=false});const b=document.querySelector('#install');if(b)b.onclick=async()=>{if(prompt){await prompt.prompt();prompt=null}else alert('Use your browser menu and choose Install app or Add to Home Screen.')}} 
 function route(){const m=location.hash.match(/^#read\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday)$/);m?reader(m[1]):home()}
 window.addEventListener('hashchange',route);route();
