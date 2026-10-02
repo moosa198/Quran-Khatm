@@ -74,7 +74,7 @@ function home(){
   </section>
   <section class="hero-actions">
    <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${todayPortion.label}${plan.id!=='weekly'?' · Week '+todayPortion.week:''}</small></span></a>
+   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${plan.id==='weekly'?todayPortion.label:'Week '+todayPortion.week+' of '+Math.ceil(plan.portions.length/7)+' · '+todayPortion.name}</small></span></a>
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Current cycle'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
@@ -90,13 +90,14 @@ function home(){
  document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{setPlan(b.dataset.plan);location.hash='';route()});install();
 }
 function reader(planIdValue,key){
+ setPlan(planIdValue);
  const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index],saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{}),mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
  const hasPdf=!!d.pdf;
  document.querySelector('#app').innerHTML=`
  <div class="reader">
   <header class="topbar">
    <a class="back" href="#">${icon('back')}<span>Home</span></a>
-   <div class="day-title"><b>${d.label}</b><small>${plan.name} · Pages ${d.pages[0]}–${d.pages[1]}</small></div>
+   <div class="day-title"><b>${d.label}</b><small>${plan.id==='weekly'?'Friday → Thursday':('Week '+d.week+' of '+Math.ceil(plan.portions.length/7)+' · '+d.name)} · Pages ${d.pages[0]}–${d.pages[1]}</small></div>
    <button data-theme-toggle class="icon-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
   </header>
   <div class="reader-nav">
