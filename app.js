@@ -79,27 +79,27 @@ function planHome(){
  document.querySelector('#app').innerHTML=` 
  <main class="home">
   <header class="home-header">
-   <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">\${icon(getTheme()==='dark'?'sun':'moon')}</button>
+   <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
    <div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <div class="plan-change"><span>Reading plan · \${plan.name}</span><a href="#choose">Change plan</a></div>
+  <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#choose">Change plan</a></div>
   <section class="hero-actions">
-   <a class="action-card primary" href="#read/\${plan.id}/\${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>\${continuePortion.label}\${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/\${plan.id}/\${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>\${todayPortion.label}</small></span></a>
+   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
+   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>${todayPortion.label}</small></span></a>
   </section>
   <section class="journey-summary">
-   <div><span class="journey-label">Your khatm</span><strong>\${done} of \${plan.portions.length}</strong><small>portions completed</small></div>
-   <div class="journey-track" aria-label="\${done} of \${plan.portions.length} portions completed"><span style="width:\${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
+   <div><span class="journey-label">Your khatm</span><strong>${done} of ${plan.portions.length}</strong><small>portions completed</small></div>
+   <div class="journey-track" aria-label="${done} of ${plan.portions.length} portions completed"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
   </section>
   <section class="day-section">
-   <div class="section-heading"><span>\${plan.id==='weekly'?'Friday → Thursday':'Your journey'}</span><small>\${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid \${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">\${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key);return `<a class="day-card \${complete?'completed ':''}\${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/\${plan.id}/\${d.key}"><span class="day-no">\${complete?'✓':d.number}</span><span class="day-copy"><b>\${d.label}</b><small>\${d.surahLabel||d.surahs}\${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="chevron">\${icon('next')}</span></a>`}).join('')}</nav>
+   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your journey'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key);return `<a class="day-card ${complete?'completed ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
   </section>
-  <section class="bookmarks-section" \${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
+  <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
-   <div class="bookmark-list">\${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/\${plan.id}/\${d.key}">Page \${m} <span>\${d.label}</span><b>\${icon('next')}</b></a>`:''}).join('')}</div>
+   <div class="bookmark-list">${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/${plan.id}/${d.key}">Page ${m} <span>${d.label}</span><b>${icon('next')}</b></a>`:''}).join('')}</div>
   </section>
   <section class="priority-note">
    <span><b>Keep the Qur'an close</b><small>For an easier habit, add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
@@ -161,8 +161,8 @@ function showCompletion(plan,d,index){
     <div class="completion-arabic" lang="ar" dir="rtl">الحمد لله</div>
     <p class="completion-kicker">KHATM COMPLETE</p>
     <h2>Alhamdulillah.</h2>
-    <p>You have completed this \${plan.name.toLowerCase()} Qur'an journey.</p>
-    <div class="completion-stat">\${done} / \${plan.portions.length} portions</div>
+    <p>You have completed this ${plan.name.toLowerCase()} Qur'an journey.</p>
+    <div class="completion-stat">${done} / ${plan.portions.length} portions</div>
     <div class="dua-card">
       <div class="dua-heading">Khatm du'a</div>
       <p>Listen to Habib Umar's khatm du'a from 12:40–33:55.</p>
@@ -176,7 +176,7 @@ function showCompletion(plan,d,index){
     <p class="completion-kicker">PORTION COMPLETE</p>
     <h2>Alhamdulillah.</h2>
     <p>Today's portion is complete.</p>
-    <div class="completion-stat">\${done} of \${plan.portions.length} portions completed</div>
+    <div class="completion-stat">${done} of ${plan.portions.length} portions completed</div>
     <p class="completion-subtle">One portion at a time.</p>
     <a class="completion-button" href="#home">Done</a>
    </div>`;
