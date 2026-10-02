@@ -1,4 +1,4 @@
-const VERSION='quran-v13';
+const VERSION='quran-v14';
 const SHELL=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./icons/mushaf.svg'];
 const CDN='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 const OFFLINE='quran-offline-v1';
