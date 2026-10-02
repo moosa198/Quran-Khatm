@@ -211,7 +211,8 @@ function setupDaySwipe(plan,index){
  surface.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});
  surface.addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-startX,dy=t.clientY-startY;if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.35)return;const target=dx<0?plan.portions[index+1]:plan.portions[index-1];if(target)location.hash='#read/'+plan.id+'/'+target.key},{passive:true});
 }
-function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}\nfunction habitTime(s){const minutes=Math.max(1,Math.round(Number(s||0)/60));if(minutes<60)return '≈ '+minutes+' min';const hours=Math.floor(minutes/60),mins=minutes%60;if(mins<10)return '≈ '+hours+' hr';return '≈ '+hours+'½ hr'}
+function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
+function habitTime(s){const minutes=Math.max(1,Math.round(Number(s||0)/60));if(minutes<60)return '≈ '+minutes+' min';const hours=Math.floor(minutes/60),mins=minutes%60;if(mins<10)return '≈ '+hours+' hr';return '≈ '+hours+'½ hr'}
 function planDailyTime(planId){const plan=PLANS[planId]||PLANS.weekly;const total=WEEKLY_DAYS.reduce((sum,d)=>sum+d.duration,0);return habitTime(total/plan.count)}
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
