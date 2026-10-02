@@ -65,9 +65,7 @@ html[data-theme=dark] .plan-change{border-color:var(--darkline)}
 .time-row{font-size:.72rem}
 .track input{height:22px}
 .player-label{font-size:.72rem;margin-left:52px}
-.loading{padding:50px}
-.loading-mark{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:reader-spin .8s linear infinite}
-@keyframes reader-spin{to{transform:rotate(360deg)}}
+.loading{padding:50px}}
 .plan-choice{min-height:76px;padding:18px 19px}
 .plan-choice-main b{font-size:1.02rem}
 .plan-choice-main small{font-size:.82rem}
