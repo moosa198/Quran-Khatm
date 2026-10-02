@@ -74,7 +74,7 @@ function portionFromRoute(plan,raw){
 const prefersDark=()=>window.matchMedia?window.matchMedia('(prefers-color-scheme:dark)').matches:false;
 const getTheme=()=>document.documentElement.dataset.theme||(prefersDark()?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode';b.textContent=icon(t==='dark'?'sun':'moon')})}
-function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
+function icon(name){if(name==='bookmark'||name==='bookmarked')return '<svg class="bookmark-glyph" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
 function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id);safeSet(PLAN_CHOSEN,true)}
 function install(){
  let prompt=null;const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
