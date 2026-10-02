@@ -11,7 +11,7 @@ SOURCE="${1:-source.mp3}"
 mkdir -p audio
 
 ffmpeg -hide_banner -loglevel error -i "$SOURCE" -map 0:a:0 \
-  -c:a libmp3lame -b:a 64k -ac 1 -ar 44100 \
+  -c:a libmp3lame -b:a 48k -ac 1 -ar 44100 \
   -f segment \
   -segment_times 3524,8878,12889,16897,20176,23411 \
   -reset_timestamps 1 \
@@ -25,4 +25,4 @@ mv audio/4.mp3 audio/tuesday.mp3
 mv audio/5.mp3 audio/wednesday.mp3
 mv audio/6.mp3 audio/thursday.mp3
 
-echo "Created seven 64 kbps mono MP3 segments."
+echo "Created seven 48 kbps mono MP3 segments."
