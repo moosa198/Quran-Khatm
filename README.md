@@ -10,15 +10,15 @@ The app supports 1-week, 2-week and 4-week Khatm schedules. The original Friday-
 
 | Day | Pages | Audio range | Duration |
 |---|---:|---:|---:|
-| Friday | 2–147 | 00:00:00–00:58:44 | 58:44 |
-| Saturday | 147–288 | 00:58:44–02:27:58 | 1:29:14 |
-| Sunday | 288–393 | 02:27:58–03:34:49 | 1:06:51 |
-| Monday | 393–511 | 03:34:49–04:41:37 | 1:06:48 |
-| Tuesday | 511–618 | 04:41:37–05:36:16 | 54:39 |
-| Wednesday | 618–721 | 05:36:16–06:30:11 | 53:55 |
-| Thursday | 721–849 | 06:30:11–07:28:33 | 58:22 |
+| Friday | 2–106 | Audio still uses the previous split | — |
+| Saturday | 106–260 | Audio still uses the previous split | — |
+| Sunday | 260–372 | Audio still uses the previous split | — |
+| Monday | 372–501 | Audio still uses the previous split | — |
+| Tuesday | 501–611 | Audio still uses the previous split | — |
+| Wednesday | 611–716 | Audio still uses the previous split | — |
+| Thursday | 716–849 | Audio still uses the previous split | — |
 
-The day boundaries are intentionally preserved exactly as supplied.
+The page ranges above follow the new source-PDF split. Adjacent portions share their boundary page exactly as specified. The existing MP3s have not yet been re-cut to these new page divisions, so audio and displayed page boundaries may not align until the original full recording is reprocessed.
 
 ## Media
 
@@ -44,4 +44,4 @@ Enable GitHub Pages for the repository, using the main branch and root folder.
 
 ## Local media generation
 
-scripts/split-audio.sh can be used to regenerate the seven audio segments from the original recording. The final weekly PDFs are committed directly to the repository, so no PDF-generation script is required for the live site.
+scripts/split-audio.sh can be used to regenerate the seven audio segments from the original recording. The weekly PDFs are generated from the supplied complete Mushaf PDF. The current source was split into the seven ranges above; the generated files are available in the conversation attachment while repository media replacement is pending.
