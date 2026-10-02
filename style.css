@@ -94,3 +94,9 @@ html[data-theme=dark] .plan-change{border-color:var(--darkline)}
  .player-label{display:block;font-size:.59rem}
  .day-copy small{font-size:.7rem}
 }
+
+/* Keep multiweek portion labels compact and surah metadata on one line */
+.day-copy,.day-card .day-copy{min-width:0;}
+.day-copy small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.day-card.today{border-color:var(--green);background:rgba(53,109,104,.07);}
+html[data-theme=dark] .day-card.today{background:rgba(113,143,139,.12);}
