@@ -18,7 +18,7 @@
 <body>
 <main id="app"></main>
 <noscript>This app requires JavaScript.</noscript>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
 <script>
 window.addEventListener("error",e=>{
   const app=document.getElementById("app");
@@ -29,7 +29,7 @@ window.addEventListener("unhandledrejection",e=>{
   if(app&&!app.innerHTML.trim()) app.innerHTML='<div style="padding:32px;font-family:system-ui,sans-serif;text-align:center"><h2>Qur\'an Khatm</h2><p>The reader encountered an error while loading.</p><button onclick="location.reload()">Reload</button></div>';
 });
 </script>
-<script src="app.js"></script>
+<script src="app.js" defer></script>
 <script>
 if("serviceWorker" in navigator) {
   window.addEventListener("load",()=>{
