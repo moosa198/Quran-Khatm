@@ -228,3 +228,8 @@ html[data-theme=dark] .motivation-video{background:#111}
  .journey-summary small{display:none}
  .plan-change{font-size:.65rem}
 }
+
+.completion-undo{display:block;margin:12px auto 0;border:0;background:transparent;color:var(--muted);font-size:.7rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.completion-undo:hover{color:var(--green)}
+.motivation-placeholder{aspect-ratio:16/9;border-radius:6px;background:linear-gradient(135deg,#e9e1d1,#f5f1e7);display:grid;place-items:center;color:var(--green);font-size:.72rem;letter-spacing:.04em}
+html[data-theme=dark] .motivation-placeholder{background:#1d2b30}
