@@ -125,7 +125,7 @@ function reader(planIdValue,key){
   <header class="topbar">
    <a class="back" href="#home">${icon('back')}<span>Home</span></a>
    <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}</small></div>
-   <a class="home-theme-link" href="#home" aria-label="Return home">⌂</a>
+   <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==="dark"?"sun":"moon")}</button>
   </header>
   <div class="reader-nav">
    ${prev?`<a href="#read/${plan.id}/${prev.key}" class="nav-day">‹ <span>${prev.label}</span></a>`:'<span></span>'}
@@ -154,6 +154,7 @@ function reader(planIdValue,key){
   </div>
  </div>`;
  
+ document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
  setupReader(plan,d,index,saved,mark);
  setupDaySwipe(plan,index);
 }
