@@ -121,7 +121,7 @@ html[data-theme=dark] .portion-detail{color:#b4d0cb;background:rgba(113,143,139,
 .priority-note b,.priority-note small{display:block}
 .priority-note b{color:var(--ink);font-size:.92rem}
 .priority-note small{color:var(--muted);font-size:.76rem;line-height:1.5;max-width:620px;margin-top:4px}
-.priority-mark{font-family:"Times New Roman",serif;color:var(--green);font-size:1.25rem;white-space:nowrap}
+.priority-mark{font-family:"Times New Roman",serif;color:var(--green);font-size:1.25rem;white-space:nowrap}.install-btn{border:1px solid var(--line);background:transparent;color:var(--ink);padding:9px 13px;border-radius:7px;font:inherit;font-size:.76rem;white-space:nowrap;cursor:pointer}.install-btn:hover{background:var(--soft)}
 .completion-panel{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(245,241,231,.96);backdrop-filter:blur(16px);overflow:auto}
 .completion-panel[hidden]{display:none}
 .completion-inner{width:min(440px,100%);text-align:center;padding:30px 20px}
