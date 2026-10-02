@@ -1,12 +1,12 @@
 (() => {
 const WEEKLY_DAYS=[
- {key:'friday',name:'Friday',number:'01',pages:[2,147],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
- {key:'saturday',name:'Saturday',number:'02',pages:[147,288],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
- {key:'sunday',name:'Sunday',number:'03',pages:[288,393],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
- {key:'monday',name:'Monday',number:'04',pages:[393,511],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
- {key:'tuesday',name:'Tuesday',number:'05',pages:[511,618],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
- {key:'wednesday',name:'Wednesday',number:'06',pages:[618,721],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
- {key:'thursday',name:'Thursday',number:'07',pages:[721,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
+ {key:'friday',name:'Friday',number:'01',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
+ {key:'saturday',name:'Saturday',number:'02',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
+ {key:'sunday',name:'Sunday',number:'03',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
+ {key:'monday',name:'Monday',number:'04',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
+ {key:'tuesday',name:'Tuesday',number:'05',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
+ {key:'wednesday',name:'Wednesday',number:'06',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
+ {key:'thursday',name:'Thursday',number:'07',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
 const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
 const KEY='weeklyQuran:';
@@ -59,7 +59,7 @@ function install(){
 function scheduleSelector(plan){
  return '<div class="schedule-selector" role="group" aria-label="Reading schedule">'+Object.values(PLANS).map(p=>'<button class="schedule-option '+(p.id===plan.id?'active':'')+'" data-plan="'+p.id+'">'+p.name+'</button>').join('')+'</div>';
 }
-function home(){
+function planHome(){
  const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{})||{};
  document.querySelector('#app').innerHTML=`
  <main class="home">
@@ -69,10 +69,7 @@ function home(){
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <section class="schedule-section">
-   <div class="section-heading"><span>Your reading plan</span><small>Complete the Qur’an every</small></div>
-   ${scheduleSelector(plan)}
-  </section>
+  <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#">Change plan</a></div>
   <section class="hero-actions">
    <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
    <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${plan.id==='weekly'?todayPortion.label:'Week '+todayPortion.week+' of '+Math.ceil(plan.portions.length/7)+' · '+todayPortion.name}</small></span></a>
@@ -88,7 +85,7 @@ function home(){
   <section class="install-note" id="install-note"><span><b>Install the reader</b><small id="install-text">Add Qur'an Khatm to your home screen for quick access.</small></span><button id="install">Install</button></section>
  </main>`;
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
- document.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>{setPlan(b.dataset.plan);location.hash='';route()});install();
+ install();
 }
 function reader(planIdValue,key){
  setPlan(planIdValue);
@@ -186,12 +183,20 @@ function renderPdfObservers(pages,startPage){
 }
 async function renderPage(wrap){
  try{
-  const source=weeklyByKey(wrap.dataset.sourceDay),pdf=await getSourcePdf(source.key),quranPage=Number(wrap.dataset.page),page=await pdf.getPage(quranPage-source.pages[0]+1),base=page.getViewport({scale:1}),width=Math.min(980,Math.max(280,wrap.clientWidth||760)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,2),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'
+  const source=weeklyByKey(wrap.dataset.sourceDay),pdf=await getSourcePdf(source.key),quranPage=Number(wrap.dataset.page),page=await pdf.getPage(quranPage-source.pages[0]+1),base=page.getViewport({scale:1}),width=Math.min(760,Math.max(280,wrap.clientWidth||680)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,2),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'
  }catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}
 }
+function openingPage(){
+ const chosen=planId();
+ const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'One portion each day':p.count===14?'A gentler two-week pace':'A steady four-week pace')+'</small></span><span class="plan-choice-arrow">→</span></a>').join('');
+ document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A quiet, consistent path through the Qur’an</p></header><section class="opening-content"><p class="eyebrow">BEGIN YOUR KHATM</p><h1>Choose your reading plan</h1><p class="opening-copy">Choose a pace that works for you. You can change your plan at any time.</p><div class="plan-choices">'+choices+'</div></section></main>';
+ document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
+}
 function route(){
+ const planMatch=location.hash.match(/^#plan\/(weekly|biweekly|fourweekly)$/);
+ if(planMatch){setPlan(planMatch[1]);planHome();return}
  const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
- if(m){const p=buildPlan(m[1]),raw=m[2];reader(m[1],raw);return}home();
+ if(m){reader(m[1],m[2]);return}openingPage();
 }
 window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);showBootError?.(e)}});
 function showBootError(error){
