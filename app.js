@@ -15,7 +15,7 @@ const dayByKey=k=>DAYS.find(d=>d.key===k)||DAYS[0];
 const todayKey=()=>['sunday','monday','tuesday','wednesday','thursday','friday','saturday'][new Date().getDay()];
 const getTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode'})}
-function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',moon:'☾',sun:'☼',bookmark:'◇',bookmarked:'◆',expand:'⛶',exit:'×',download:'↓',repeat:'↻',volume:'◖',save:'⇩',check:'✓'})[name]||'·'}
+function icon(name){return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',bookmark:'♡',bookmarked:'♥',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
 function install(){let prompt=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;document.querySelector('#install-note')?.removeAttribute('hidden')});document.querySelector('#install')?.addEventListener('click',async()=>{if(prompt){await prompt.prompt();prompt=null}else alert('Use your browser menu and choose Install app or Add to Home Screen.')})}
 function home(){
  const today=todayKey(), saved=safeGet(KEY+'last'), continueDay=saved?.day?dayByKey(saved.day):dayByKey(today), marks=safeGet(KEY+'bookmarks',{});
@@ -23,18 +23,17 @@ function home(){
  <main class="home">
   <header class="home-header">
    <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
-   <div class="mushaf-mark" aria-hidden="true"></div>
+   <div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
-   <p>Weekly Qur’an Reading</p>
   </header>
   <section class="hero-actions">
    <a class="action-card primary" href="#read/${continueDay.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continueDay.name}${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/${today}"><span class="action-icon">▣</span><span><b>Today</b><small>${dayByKey(today).name} · pages ${dayByKey(today).pages[0]}–${dayByKey(today).pages[1]}</small></span></a>
+   <a class="action-card" href="#read/${today}"><span class="action-icon">▣</span><span><b>Today</b><small>${dayByKey(today).name}</small></span></a>
   </section>
   <section class="day-section">
-   <div class="section-heading"><span>Weekly portions</span><small>Friday → Thursday</small></div>
-   <nav class="day-grid" aria-label="Weekly portions">${DAYS.map(d=>`<a class="day-card ${d.key===today?'today':''}" href="#read/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.name}</b><small>Pages ${d.pages[0]}–${d.pages[1]}${marks[d.key]?' · bookmarked p. '+marks[d.key]:''}</small></span><span class="chevron">${icon('next')}</span></a>`).join('')}</nav>
+   <div class="section-heading"><span>Friday → Thursday</span></div>
+   <nav class="day-grid" aria-label="Weekly portions">${DAYS.map(d=>`<a class="day-card ${d.key===today?'today':''}" href="#read/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.name}</b>${marks[d.key]?'<small>Bookmarked · page '+marks[d.key]+'</small>':''}</span><span class="chevron">${icon('next')}</span></a>`).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).length?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
@@ -61,10 +60,8 @@ function reader(key){
    ${next?`<a href="#read/${next.key}" class="nav-day"><span>${next.name}</span> ›</a>`:'<span></span>'}
   </div>
   <div class="reader-tools">
-   <button id="bookmark" class="tool-btn ${mark?'active':''}" aria-label="${mark?'Remove bookmark':'Bookmark current page'}" title="${mark?'Remove bookmark':'Bookmark current page'}">${icon(mark?'bookmarked':'bookmark')} <span>${mark?'Bookmarked':'Bookmark'}</span></button>
-   <button id="offline" class="tool-btn" aria-label="Save this day for offline use" title="Save this day for offline use">${icon('save')} <span>Save offline</span></button>
-   <button id="focus" class="tool-btn" aria-label="Enter focus mode" title="Focus mode">${icon('expand')} <span>Focus</span></button>
-   <a class="tool-btn" href="${d.pdf}" download aria-label="Download PDF" title="Download PDF">${icon('download')} <span>PDF</span></a>
+   <button id="offline" class="tool-btn" aria-label="Save this day for offline use" title="Save this day for offline use"><span>Save offline</span></button>
+   <button id="focus" class="tool-btn desktop-only" aria-label="Enter focus mode" title="Focus mode"><span>Focus</span></button>
   </div>
   <div class="progress-line"><span id="reading-progress"></span></div>
   <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading">Opening the Mushaf…</div></section>
@@ -76,11 +73,9 @@ function reader(key){
     <button id="back10" class="mini-btn" aria-label="Back 10 seconds" title="Back 10 seconds">−10</button>
     <div class="track"><div class="time-row"><span id="time">0:00</span><span>${fmt(d.duration)}</span></div><input id="seek" type="range" min="0" max="${d.duration}" value="0" step=".1" aria-label="Audio position"></div>
     <button id="forward10" class="mini-btn" aria-label="Forward 10 seconds" title="Forward 10 seconds">+10</button>
-    <button id="repeat" class="mini-btn" aria-label="Repeat this day's audio" title="Repeat this day's audio">${icon('repeat')}</button>
     <button id="speed" class="speed" aria-label="Playback speed">1×</button>
-    <button id="volume-btn" class="mini-btn" aria-label="Mute" title="Mute">${icon('volume')}</button>
+    <button id="bookmark" class="audio-bookmark ${mark?'active':''}" aria-label="${mark?'Remove bookmark':'Bookmark current page'}" title="${mark?'Remove bookmark':'Bookmark current page'}">${icon(mark?'bookmarked':'bookmark')}</button>
    </div>
-   <input id="volume" class="volume" type="range" min="0" max="1" value="1" step=".01" aria-label="Volume">
    <div class="player-label">Sheikh Ahmed Dibaan · ${d.name} portion</div>
   </div>
  </div>`;
@@ -97,38 +92,33 @@ function setBookmark(d,page){
 }
 async function saveOffline(d){
  const button=document.querySelector('#offline');if(!('caches' in window)){toast('Offline saving is not supported here.');return}
- button.disabled=true;button.classList.add('active');button.querySelector('span').textContent='Saving…';
+ button.disabled=true;button.classList.add('active');button.textContent='Saving…';
  try{
   const cache=await caches.open('quran-offline-v1');
   await Promise.all([cache.add(new Request(d.pdf)),cache.add(new Request(d.audio,{credentials:'same-origin'}))]);
-  safeSet(KEY+'offline:'+d.key,true);button.querySelector('span').textContent='Saved offline';toast(d.name+' saved for offline use');
- }catch(e){button.classList.remove('active');button.querySelector('span').textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}
+  safeSet(KEY+'offline:'+d.key,true);button.textContent='Saved offline';toast(d.name+' saved for offline use');
+ }catch(e){button.classList.remove('active');button.textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}
  button.disabled=false;
 }
 async function setupReader(d,saved,initialBookmark){
- const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time'),volume=document.querySelector('#volume');
+ const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time');
  let rate=Number(safeGet(KEY+'speed',1));if(![1,1.5,2].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';
- let vol=Number(safeGet(KEY+'volume',1));if(!(vol>=0&&vol<=1))vol=1;audio.volume=vol;volume.value=vol;
  const setPlay=()=>{const playing=!audio.paused;play.innerHTML=icon(playing?'pause':'play');play.setAttribute('aria-label',playing?'Pause':'Play');play.title=playing?'Pause':'Play'};
  play.onclick=()=>audio.paused?audio.play().catch(()=>{}):audio.pause();audio.onplay=setPlay;audio.onpause=setPlay;
  let lastSaved=-1;audio.ontimeupdate=()=>{seek.value=audio.currentTime;time.textContent=fmt(audio.currentTime);const bucket=Math.floor(audio.currentTime/5);if(bucket!==lastSaved){lastSaved=bucket;try{localStorage.setItem(KEY+'audio:'+d.key,String(audio.currentTime))}catch{}}};
  audio.onloadedmetadata=()=>{const p=Number(localStorage.getItem(KEY+'audio:'+d.key)||0);if(p>2&&p<audio.duration-2)audio.currentTime=p;setPlay()};
- audio.onended=()=>{if(!audio.loop){const i=DAYS.findIndex(x=>x.key===d.key);if(DAYS[i+1])location.hash='#read/'+DAYS[i+1].key}};
+ audio.onended=()=>{const i=DAYS.findIndex(x=>x.key===d.key);if(DAYS[i+1])location.hash='#read/'+DAYS[i+1].key};
  seek.oninput=()=>audio.currentTime=Number(seek.value);
  document.querySelector('#back10').onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-10);
  document.querySelector('#forward10').onclick=()=>audio.currentTime=Math.min(audio.duration||d.duration,audio.currentTime+10);
- document.querySelector('#repeat').onclick=e=>{audio.loop=!audio.loop;e.currentTarget.classList.toggle('active',audio.loop);toast(audio.loop?'Repeat on':'Repeat off')};
  speed.onclick=()=>{rate=rate===1?1.5:rate===1.5?2:1;audio.playbackRate=rate;speed.textContent=rate+'×';safeSet(KEY+'speed',rate)};
- volume.oninput=()=>{audio.volume=Number(volume.value);safeSet(KEY+'volume',audio.volume);document.querySelector('#volume-btn').setAttribute('aria-label',audio.volume?'Mute':'Unmute')};
- document.querySelector('#volume-btn').onclick=()=>{audio.muted=!audio.muted;document.querySelector('#volume-btn').textContent=audio.muted?'×':icon('volume');document.querySelector('#volume-btn').setAttribute('aria-label',audio.muted?'Unmute':'Mute')};
  audio.onerror=()=>{const label=document.querySelector('.player-label');if(label)label.textContent='Audio unavailable — check the selected MP3 in quran/.'};
  const bookmark=document.querySelector('#bookmark');
- bookmark.onclick=()=>{const p=window.currentQuranPage||d.pages[0],b=setBookmark(d,p),isOn=!!b;bookmark.classList.toggle('active',isOn);bookmark.innerHTML=icon(isOn?'bookmarked':'bookmark')+' <span>'+(isOn?'Bookmarked':'Bookmark')+'</span>';bookmark.setAttribute('aria-label',isOn?'Remove bookmark':'Bookmark current page');toast(isOn?'Page '+p+' bookmarked':'Bookmark removed')};
+ bookmark.onclick=()=>{const p=window.currentQuranPage||d.pages[0],b=setBookmark(d,p),isOn=!!b;bookmark.classList.toggle('active',isOn);bookmark.innerHTML=icon(isOn?'bookmarked':'bookmark');bookmark.setAttribute('aria-label',isOn?'Remove bookmark':'Bookmark current page');bookmark.title=isOn?'Remove bookmark':'Bookmark current page';toast(isOn?'Page '+p+' bookmarked':'Bookmark removed')};
  document.querySelector('#offline').onclick=()=>saveOffline(d);
  const focus=document.querySelector('#focus');
- focus.onclick=async()=>{if(document.fullscreenElement){await document.exitFullscreen?.()}else await document.documentElement.requestFullscreen?.();updateFocus()};
- document.addEventListener('fullscreenchange',updateFocus);
- function updateFocus(){const on=!!document.fullscreenElement;focus.innerHTML=icon(on?'exit':'expand')+' <span>'+(on?'Exit focus':'Focus')+'</span>';focus.setAttribute('aria-label',on?'Exit focus mode':'Enter focus mode');focus.title=on?'Exit focus mode':'Focus mode'}
+ if(focus){focus.onclick=async()=>{if(document.fullscreenElement){await document.exitFullscreen?.()}else await document.documentElement.requestFullscreen?.();updateFocus()};document.addEventListener('fullscreenchange',updateFocus)}
+ function updateFocus(){if(!focus)return;const on=!!document.fullscreenElement;focus.innerHTML='<span>'+(on?'Exit focus':'Focus')+'</span>';focus.setAttribute('aria-label',on?'Exit focus mode':'Enter focus mode');focus.title=on?'Exit focus mode':'Focus mode'}
  const range=document.querySelector('#page-range'),output=document.querySelector('#page-output');
  range.oninput=()=>{output.value=range.value;const p=document.querySelector('.pdf-page[data-page="'+range.value+'"]');p?.scrollIntoView({behavior:'smooth',block:'start'});saveLast(d,Number(range.value));window.currentQuranPage=Number(range.value)};
  await renderPdf(d,saved?.day===d.key&&saved.page?saved.page:d.pages[0]);
