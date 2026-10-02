@@ -1,5 +1,5 @@
-const VERSION='quran-v21';
-const SHELL=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./icons/mushaf.svg'];
+const VERSION='quran-v22';
+const SHELL=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./icons/mushaf.svg','./icons/mushaf.png'];
 const CDN='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 const OFFLINE='quran-offline-v1';
 const SHELL_PATHS=new Set(SHELL.map(p=>new URL(p,self.location).pathname));
