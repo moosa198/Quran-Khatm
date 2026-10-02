@@ -14,16 +14,10 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icons/mushaf.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
       "src": "icons/mushaf.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
