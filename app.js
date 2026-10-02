@@ -212,11 +212,11 @@ function route(){
  if(hash==='#home'){planHome();return}
  const planMatch=hash.match(/^#plan\/(weekly|biweekly|fourweekly)$/);
  if(planMatch){setPlan(planMatch[1]);planHome();return}
- const m=hash.match(/^#read\/(weekly|biweekly|fourweekly)\/([a-z]+(?:-\\d+)?)$/);
+ const m=hash.match(/^#read\/(weekly|biweekly|fourweekly)\/([a-z0-9-]+)$/);
  if(m){
   const validKey=m[1]==='weekly'
-   ? /^(friday|saturday|sunday|monday|tuesday|wednesday|thursday)$/.test(m[2])
-   : new RegExp('^'+m[1]+'-\\d+$').test(m[2]);
+   ? ['friday','saturday','sunday','monday','tuesday','wednesday','thursday'].includes(m[2])
+   : m[2].startsWith(m[1]+'-') && Number.isInteger(Number(m[2].slice(m[1].length+1)));
   if(validKey){reader(m[1],m[2]);return}
  }
  if(safeGet(PLAN_CHOSEN,false)||safeGet(KEY+'last')){planHome();return}
@@ -226,8 +226,8 @@ window.addEventListener('hashchange',()=>{try{route()}catch(e){console.error(e);
 function showBootError(error){
  const app=document.querySelector('#app');
  if(!app)return;
- console.error("Qur'an Khatm boot error:",error);
- app.innerHTML='<div style="padding:32px;max-width:560px;margin:auto;font-family:system-ui,sans-serif;text-align:center"><h2>Qur\\'an Khatm</h2><p>The reader encountered an error while loading.</p><p style="font-size:13px;opacity:.7;word-break:break-word">'+String(error?.message||error).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</p><button onclick="location.reload()">Reload</button></div>';
+ console.error('Quran Khatm boot error:',error);
+ app.innerHTML='<div style="padding:32px;max-width:560px;margin:auto;font-family:system-ui,sans-serif;text-align:center"><h2>Quran Khatm</h2><p>The reader encountered an error while loading.</p><p style="font-size:13px;opacity:.7;word-break:break-word">'+String(error?.message||error).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))+'</p><button onclick="location.reload()">Reload</button></div>';
 }
 try{route()}catch(e){showBootError(e)}
 })();
