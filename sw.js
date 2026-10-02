@@ -1,4 +1,4 @@
-const VERSION='quran-v6';
+const VERSION='quran-v7';
 const SHELL=['./','./index.html','./style.css','./app.js','./manifest.webmanifest','./icons/mushaf.svg'];
 const CDN='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
 const OFFLINE='quran-offline-v1';
@@ -26,6 +26,14 @@ self.addEventListener('fetch',e=>{
    return;
  }
  if(u.origin!==location.origin&&!u.href.startsWith(CDN))return;
+ const isShell=/^https?:\\/\\/[^/]+\\/(?:index\\.html|app\\.js|style\\.css|manifest\\.webmanifest|sw\\.js)?(?:\\?.*)?$/.test(e.request.url) || e.request.mode==='navigate';
+ if(isShell){
+   e.respondWith(fetch(e.request).then(r=>{
+     if(r.ok||r.type==='opaque')caches.open(VERSION).then(c=>c.put(e.request,r.clone())).catch(()=>{});
+     return r;
+   }).catch(()=>caches.match(e.request).then(c=>c||caches.match('./index.html'))));
+   return;
+ }
  e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(r=>{
    if(r.ok||r.type==='opaque')caches.open(VERSION).then(c=>c.put(e.request,r.clone())).catch(()=>{});
    return r;
