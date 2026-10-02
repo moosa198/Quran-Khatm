@@ -36,11 +36,11 @@ window.addEventListener("unhandledrejection",e=>{
   if(app&&!app.innerHTML.trim()) showBootError(e.reason||new Error("Unhandled promise rejection"));
 });
 </script>
-<script src="app.js?v=20261003-9" defer></script>
+<script src="app.js?v=20261003-10" defer></script>
 <script>
 if("serviceWorker" in navigator) {
   window.addEventListener("load",()=>{
-    navigator.serviceWorker.register("./sw.js?v=16",{updateViaCache:"none"}).catch(()=>{});
+    navigator.serviceWorker.register("./sw.js?v=17",{updateViaCache:"none"}).catch(()=>{});
   });
 }
 </script>
