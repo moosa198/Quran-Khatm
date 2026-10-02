@@ -1,12 +1,12 @@
 (() => {
 const WEEKLY_DAYS=[
- {key:'friday',name:'Friday',number:'01',surahs:'Al-Fātiḥah – An-Nisā’',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
- {key:'saturday',name:'Saturday',number:'02',surahs:'Al-Mā’idah – Ar-Ra‘d',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
- {key:'sunday',name:'Sunday',number:'03',surahs:'Ibrāhīm – Al-Ḥijr',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
+ {key:'friday',name:'Friday',number:'01',surahs:'Al-Fātiḥah – Āl ʿImrān',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3',duration:3524},
+ {key:'saturday',name:'Saturday',number:'02',surahs:'An-Nisā’ – Al-Anfāl',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3',duration:5354},
+ {key:'sunday',name:'Sunday',number:'03',surahs:'At-Tawbah – Al-Ḥijr',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3',duration:4011},
  {key:'monday',name:'Monday',number:'04',surahs:'An-Naḥl – An-Nūr',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3',duration:4008},
  {key:'tuesday',name:'Tuesday',number:'05',surahs:'Al-Furqān – Fāṭir',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3',duration:3279},
  {key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Fatḥ',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
- {key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
+ {key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās (Al-Mufassal)',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
 const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
 const KEY='weeklyQuran:';
