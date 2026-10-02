@@ -11,6 +11,12 @@ const WEEKLY_DAYS=[
 const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
 const KEY='weeklyQuran:';
 const PLAN_CHOSEN=KEY+'planChosen';
+const COMPLETED_KEY=KEY+'completed';
+const completedMap=()=>safeGet(COMPLETED_KEY,{})||{};
+const completionKey=(planId,key)=>planId+':'+key;
+const isCompleted=(planId,key)=>!!completedMap()[completionKey(planId,key)];
+function markCompleted(planId,key){const m=completedMap();m[completionKey(planId,key)]={completedAt:Date.now()};safeSet(COMPLETED_KEY,m);return m;}
+function completedCount(plan){return plan.portions.filter(p=>isCompleted(plan.id,p.key)).length;}
 const QURAN_FIRST=2,QURAN_LAST=849,QURAN_PAGES=848;
 const DAY_NAMES=['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
 const safeGet=(key,fallback=null)=>{try{const v=localStorage.getItem(key);return v==null?fallback:JSON.parse(v)}catch{return fallback}};
@@ -67,33 +73,40 @@ function install(){
 function scheduleSelector(plan){
  return '<div class="schedule-selector" role="group" aria-label="Reading schedule">'+Object.values(PLANS).map(p=>'<button class="schedule-option '+(p.id===plan.id?'active':'')+'" data-plan="'+p.id+'">'+p.name+'</button>').join('')+'</div>';
 }
+
 function planHome(){
- const plan=getPlan(),today=todayIndex(plan),defaultIndex=plan.id==='weekly'?today:0,saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[defaultIndex],marks=safeGet(KEY+'bookmarks',{})||{};
- document.querySelector('#app').innerHTML=`
+ const plan=getPlan(),today=todayIndex(plan),defaultIndex=plan.id==='weekly'?today:0,saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[defaultIndex],marks=safeGet(KEY+'bookmarks',{})||{},done=completedCount(plan);
+ document.querySelector('#app').innerHTML=` 
  <main class="home">
   <header class="home-header">
-   <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
+   <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">\${icon(getTheme()==='dark'?'sun':'moon')}</button>
    <div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <div class="plan-change"><span>Reading plan · ${plan.name}</span><a href="#choose">Change plan</a></div>
+  <div class="plan-change"><span>Reading plan · \${plan.name}</span><a href="#choose">Change plan</a></div>
   <section class="hero-actions">
-   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''}</small></span></a>
-   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today</b><small>${todayPortion.label}</small></span></a>
+   <a class="action-card primary" href="#read/\${plan.id}/\${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>\${continuePortion.label}\${saved?.page?' · page '+saved.page:''}</small></span></a>
+   <a class="action-card" href="#read/\${plan.id}/\${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>\${todayPortion.label}</small></span></a>
+  </section>
+  <section class="journey-summary">
+   <div><span class="journey-label">Your khatm</span><strong>\${done} of \${plan.portions.length}</strong><small>portions completed</small></div>
+   <div class="journey-track" aria-label="\${done} of \${plan.portions.length} portions completed"><span style="width:\${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
   </section>
   <section class="day-section">
-   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Current cycle'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const mark=marks[plan.id+':'+d.key];return `<a class="day-card ${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${d.number}</span><span class="day-copy"><b>${d.label}</b><small>${d.surahLabel||d.surahs}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}${mark?' · ♥':''}</small></span><span class="chevron">${icon('next')}</span></a>`}).join('')}</nav>
+   <div class="section-heading"><span>\${plan.id==='weekly'?'Friday → Thursday':'Your journey'}</span><small>\${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
+   <nav class="day-grid \${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">\${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key);return `<a class="day-card \${complete?'completed ':''}\${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/\${plan.id}/\${d.key}"><span class="day-no">\${complete?'✓':d.number}</span><span class="day-copy"><b>\${d.label}</b><small>\${d.surahLabel||d.surahs}\${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="chevron">\${icon('next')}</span></a>`}).join('')}</nav>
   </section>
-  <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
+  <section class="bookmarks-section" \${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
-   <div class="bookmark-list">${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/${plan.id}/${d.key}">Page ${m} <span>${d.label}</span><b>${icon('next')}</b></a>`:''}).join('')}</div>
+   <div class="bookmark-list">\${plan.portions.map(d=>{const m=marks[plan.id+':'+d.key];return m?`<a href="#read/\${plan.id}/\${d.key}">Page \${m} <span>\${d.label}</span><b>\${icon('next')}</b></a>`:''}).join('')}</div>
   </section>
-  <section class="install-note" id="install-note"><span><b>Install the reader</b><small id="install-text">Add Qur'an Khatm to your home screen for quick access.</small></span><button id="install">Install</button></section>
+  <section class="priority-note">
+   <span><b>Keep the Qur'an close</b><small>For an easier habit, add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
+   <span class="priority-mark" aria-hidden="true">القرآن</span>
+  </section>
  </main>`;
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
- install();
 }
 function reader(planIdValue,key){
  setPlan(planIdValue);
@@ -118,6 +131,7 @@ function reader(planIdValue,key){
   <div class="progress-line"><span id="reading-progress"></span></div>
   <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"><div class="loading" aria-label="Loading pages"><span class="loading-mark" aria-hidden="true"></span></div></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <section class="completion-panel" id="completion-panel" hidden></section>
   <div class="audio-player">
    <audio id="audio" preload="metadata"></audio>
    <div class="player-main">
@@ -128,13 +142,50 @@ function reader(planIdValue,key){
     <button id="speed" class="speed" aria-label="Playback speed">1×</button>
     <button id="bookmark" class="audio-bookmark ${mark?'active':''}" aria-label="${mark?'Remove bookmark':'Bookmark current page'}" title="${mark?'Remove bookmark':'Bookmark current page'}">${icon(mark?'bookmarked':'bookmark')}</button>
    </div>
-   <div class="player-label">Sheikh Ahmed Dibaan · ${d.label} portion${plan.id==='weekly'?'':' · audio follows the selected pages'}</div>
+   <div class="player-label">Sheikh Ahmed Dibaan · ${d.label} · Read along, or listen while you go about your day.</div>
   </div>
  </div>`;
  document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.onclick=()=>setTheme(getTheme()==='dark'?'light':'dark'));
  setupReader(plan,d,index,saved,mark);
  setupDaySwipe(plan,index);
 }
+
+function showCompletion(plan,d,index){
+ if(isCompleted(plan.id,d.key))return;
+ markCompleted(plan.id,d.key);
+ const done=completedCount(plan),last=done===plan.portions.length,panel=document.querySelector('#completion-panel');
+ if(!panel)return;
+ panel.hidden=false;
+ panel.innerHTML=last?`
+   <div class="completion-inner khatm-complete">
+    <div class="completion-arabic" lang="ar" dir="rtl">الحمد لله</div>
+    <p class="completion-kicker">KHATM COMPLETE</p>
+    <h2>Alhamdulillah.</h2>
+    <p>You have completed this \${plan.name.toLowerCase()} Qur'an journey.</p>
+    <div class="completion-stat">\${done} / \${plan.portions.length} portions</div>
+    <div class="dua-card">
+      <div class="dua-heading">Khatm du'a</div>
+      <p>Listen to Habib Umar's khatm du'a from 12:40–33:55.</p>
+      <div class="dua-video"><iframe src="https://www.youtube.com/embed/2eLaO3g0H6E?start=760&end=2035&rel=0" title="Habib Umar khatm du'a" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+      <a class="dua-link" href="https://www.youtube.com/live/2eLaO3g0H6E?is=HsYXolI9r3jFXpz9" target="_blank" rel="noopener">Open the full khatm du'a ↗</a>
+    </div>
+    <a class="completion-button" href="#home">Return home</a>
+   </div>`:`
+   <div class="completion-inner">
+    <div class="completion-check">✓</div>
+    <p class="completion-kicker">PORTION COMPLETE</p>
+    <h2>Alhamdulillah.</h2>
+    <p>Today's portion is complete.</p>
+    <div class="completion-stat">\${done} of \${plan.portions.length} portions completed</div>
+    <p class="completion-subtle">One portion at a time.</p>
+    <a class="completion-button" href="#home">Done</a>
+   </div>`;
+ if(last)window.scrollTo({top:0,behavior:'smooth'});else panel.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function maybeCompleteFromPage(plan,d,index,page){
+ if(Number(page)>=Number(d.pages[1]))showCompletion(plan,d,index);
+}
+
 function setupDaySwipe(plan,index){
  const surface=document.querySelector('#pdf-viewer');let startX=0,startY=0;
  surface.addEventListener('touchstart',e=>{const t=e.changedTouches[0];startX=t.clientX;startY=t.clientY},{passive:true});
@@ -156,7 +207,7 @@ async function setupReader(plan,d,index,saved,initialBookmark){
  const stored=Number(localStorage.getItem(KEY+'audio:'+plan.id+':'+d.key)||0);if(stored>2&&stored<total-2)setGlobalTime(stored,false);
  play.onclick=()=>audio.paused?audio.play().catch(()=>{}):audio.pause();audio.onplay=setPlay;audio.onpause=setPlay;
  audio.ontimeupdate=()=>{if(!segments[segIndex])return;segElapsed=Math.max(0,audio.currentTime-segments[segIndex].from);const g=globalTime();seek.value=g;time.textContent=fmt(g);const bucket=Math.floor(g/5);if(bucket!==(window.__audioBucket||-1)){window.__audioBucket=bucket;try{localStorage.setItem(KEY+'audio:'+plan.id+':'+d.key,String(g))}catch{}}};
- audio.onended=()=>{if(segIndex<segments.length-1){loadSegment(segIndex+1,true);return}const nextPortion=plan.portions[index+1];if(nextPortion)location.hash='#read/'+plan.id+'/'+nextPortion.key};
+ audio.onended=()=>{if(segIndex<segments.length-1){loadSegment(segIndex+1,true);return}showCompletion(plan,d,index);audio.pause()};
  seek.oninput=()=>setGlobalTime(Number(seek.value),false);
  document.querySelector('#back10').onclick=()=>setGlobalTime(globalTime()-10,!audio.paused);
  document.querySelector('#forward10').onclick=()=>setGlobalTime(globalTime()+10,!audio.paused);
@@ -192,7 +243,7 @@ const pdfCache=new Map();
 async function getSourcePdf(dayKey){if(pdfCache.has(dayKey))return pdfCache.get(dayKey);const p=pdfjsLib.getDocument(weeklyByKey(dayKey).pdf).promise;pdfCache.set(dayKey,p);return p}
 function renderPdfObservers(pages,startPage){
  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
- const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const plan=getPlan(),d=plan.portions.find(x=>n>=x.pages[0]&&n<=x.pages[1])||plan.portions[0],idx=plan.portions.indexOf(d);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(plan,d,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
+ const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const plan=getPlan(),d=plan.portions.find(x=>n>=x.pages[0]&&n<=x.pages[1])||plan.portions[0],idx=plan.portions.indexOf(d);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(plan,d,idx,n);maybeCompleteFromPage(plan,d,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
  const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
 }
 async function renderPage(wrap){
@@ -203,7 +254,7 @@ async function renderPage(wrap){
 function openingPage(){
  const chosen=planId();
  const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'One portion each day':p.count===14?'A gentler two-week pace':'A steady four-week pace')+'</small></span><span class="plan-choice-arrow">→</span></a>').join('');
- document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A quiet, consistent path through the Qur’an</p></header><section class="opening-content"><p class="eyebrow">BEGIN YOUR KHATM</p><h1>Choose your reading plan</h1><p class="opening-copy">Choose a pace that works for you. You can change your plan at any time.</p><div class="plan-choices">'+choices+'</div></section></main>';
+ document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A quiet, consistent path through the Qur’an</p></header><section class="opening-content"><p class="eyebrow">BEGIN YOUR KHATM</p><h1>Choose your reading plan</h1><div class="motivation-card"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>A short reminder to renew your intention and make reading a priority.</p><div class="motivation-video"><iframe src="https://www.instagram.com/reel/DZ0BW1cCjCa/embed/" title="Qur’an reminder" loading="lazy" allowtransparency="true" allow="encrypted-media"></iframe></div><a class="motivation-link" href="https://www.instagram.com/reel/DZ0BW1cCjCa/" target="_blank" rel="noopener">Watch the reminder ↗</a></div><p class="opening-copy">Choose a pace that works for you. You can change your plan at any time.</p><div class="plan-choices">'+choices+'</div></section></main>';
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
 }
 function route(){
