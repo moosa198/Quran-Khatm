@@ -100,3 +100,11 @@ html[data-theme=dark] .plan-change{border-color:var(--darkline)}
 .day-copy small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .day-card.today{border-color:var(--green);background:rgba(53,109,104,.07);}
 html[data-theme=dark] .day-card.today{background:rgba(113,143,139,.12);}
+
+/* Surah names stay readable; portion fractions are secondary metadata. */
+.day-copy small{display:flex;align-items:baseline;gap:6px;min-width:0;}
+.day-copy small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.portion-detail{flex:0 0 auto;font-size:.68em;line-height:1.4;color:var(--green);background:rgba(53,109,104,.09);border-radius:4px;padding:1px 5px;font-variant-numeric:tabular-nums;}
+.day-title small{display:flex;justify-content:center;align-items:center;gap:7px;white-space:nowrap;}
+html[data-theme=dark] .portion-detail{color:#b4d0cb;background:rgba(113,143,139,.16);}
+@media(max-width:680px){.day-copy small{gap:4px}.portion-detail{padding:1px 4px}}
