@@ -53,7 +53,7 @@ function install(){
  const standalone=(window.matchMedia?window.matchMedia('(display-mode: standalone)').matches:false)||window.navigator.standalone===true;if(standalone){note?.setAttribute('hidden','');return}
  note?.removeAttribute('hidden');const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
  if(isiOS&&textEl)textEl.textContent='On iPhone or iPad: Share → Add to Home Screen.';
- window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent='Install Qur'an Khatm on your device.'});
+ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();prompt=e;if(textEl)textEl.textContent="Install Qur'an Khatm on your device."});
  button?.addEventListener('click',async()=>{if(prompt){await prompt.prompt();prompt=null;return}if(isiOS)alert('On iPhone or iPad, tap Share, then choose “Add to Home Screen”.');else alert('Open your browser menu and choose “Install app” or “Add to Home Screen”.')});
 }
 function scheduleSelector(plan){
