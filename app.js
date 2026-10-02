@@ -131,7 +131,7 @@ function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.fl
 function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
 function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{}),key=plan.id+':'+d.key;if(marks[key]===page)delete marks[key];else marks[key]=page;safeSet(KEY+'bookmarks',marks);return marks[key]||null}
-async function saveOffline(d){const button=document.querySelector('#offline');if(!d.pdf){toast('Offline PDF saving is not available for this schedule yet.');return}if(!('caches'in window)){toast('Offline saving is not supported here.');return}button.disabled=true;button.classList.add('active');button.textContent='Saving…';try{const cache=await caches.open('quran-offline-v1');await Promise.all([cache.add(new Request(d.pdf)),...d.audioSegments.map(s=>cache.add(new Request(s.src,{credentials:'same-origin'})))]);button.textContent='Saved offline';toast(d.label+' saved for offline use')}catch(e){button.classList.remove('active');button.textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}button.disabled=false}
+async function saveOffline(d){const button=document.querySelector('#offline');if(!('caches'in window)){toast('Offline saving is not supported here.');return}button.disabled=true;button.classList.add('active');button.textContent='Saving…';try{const cache=await caches.open('quran-offline-v1');const pdfs=d.pdf?[d.pdf]:[...new Set(d.audioSegments.map(s=>weeklyByKey(s.day).pdf))];await Promise.all([...pdfs.map(p=>cache.add(new Request(p))),...d.audioSegments.map(s=>cache.add(new Request(s.src,{credentials:'same-origin'})))]);button.textContent='Saved offline';toast(d.label+' saved for offline use')}catch(e){button.classList.remove('active');button.textContent='Save offline';toast('Could not save this day. Check your connection and try again.')}button.disabled=false}
 async function setupReader(plan,d,index,saved,initialBookmark){
  const audio=document.querySelector('#audio'),play=document.querySelector('#play'),seek=document.querySelector('#seek'),speed=document.querySelector('#speed'),time=document.querySelector('#time'),segments=d.audioSegments||[],total=segments.reduce((a,s)=>a+s.duration,0);
  let segIndex=0,segElapsed=0,rate=Number(safeGet(KEY+'speed',1));if(![1,1.5,2].includes(rate))rate=1;audio.playbackRate=rate;speed.textContent=rate+'×';seek.max=total||d.duration;
@@ -160,27 +160,33 @@ async function renderPdf(d,startPage){
  const viewer=document.querySelector('#pdf-viewer');if(!window.pdfjsLib){viewer.innerHTML='<div class="error">PDF viewer unavailable.</div>';return}
  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
  try{
-  let pdf,first=d.pages[0],last=d.pages[1];
-  if(d.pdf)pdf=await pdfjsLib.getDocument(d.pdf).promise;else{
-   const files=[...new Set(d.audioSegments.map(s=>s.day))]; // The 2/4-week plans reuse the existing day PDFs.
-   const source=weeklyByKey(files[0]);pdf=await pdfjsLib.getDocument(source.pdf).promise;
-   viewer.innerHTML='<div class="schedule-note">This schedule spans multiple Mushaf files. Use the day portions below to continue reading.</div>';
-   const covered=new Set();
-   files.forEach(k=>{const wd=weeklyByKey(k);for(let p=Math.max(first,wd.pages[0]);p<=Math.min(last,wd.pages[1]);p++)covered.add(p)});
-   const needed=[...covered].sort((a,b)=>a-b);for(const p of needed){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=p;wrap.innerHTML='<div class="page-loading">Page '+p+'</div>';viewer.appendChild(wrap)}
-   return renderPdfPages(pdf,viewer,needed,first,startPage);
+  const pages=[];
+  if(d.pdf){
+   const pdf=await pdfjsLib.getDocument(d.pdf).promise;
+   for(let n=d.pages[0];n<=Math.min(d.pages[1],d.pages[0]+pdf.numPages-1);n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.dataset.sourceDay=d.key;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
+   renderPdfObservers(pages,startPage);
+  }else{
+   viewer.innerHTML='<div class="schedule-note">This reading plan combines the existing Mushaf day files. Pages are shown continuously here; audio is proportionally mapped to the selected pages.</div>';
+   for(let n=d.pages[0];n<=d.pages[1];n++){
+    const source=WEEKLY_DAYS.find(w=>n>=w.pages[0]&&n<=w.pages[1])||WEEKLY_DAYS[0];
+    const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.dataset.sourceDay=source.key;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap);
+   }
+   renderPdfObservers(pages,startPage);
   }
-  const pages=[];for(let n=first;n<=Math.min(last,first+pdf.numPages-1);n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
-  renderPdfObservers(pdf,pages,first,startPage);
  }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Check the selected day’s PDF.</div>'}
 }
-function renderPdfPages(pdf,viewer,needed,first,startPage){const pages=[...viewer.querySelectorAll('.pdf-page')];renderPdfObservers(pdf,pages,first,startPage)}
-function renderPdfObservers(pdf,pages,first,startPage){
- const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(pdf,e.target,first)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
- const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(getPlan(),getPlan().portions.find(x=>n>=x.pages[0]&&n<=x.pages[1])||getPlan().portions[0],getPlan().portions.findIndex(x=>n>=x.pages[0]&&n<=x.pages[1]),n);document.querySelector('#reading-progress').style.width=((n-first+1)/(pages[pages.length-1].dataset.page-first+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
+const pdfCache=new Map();
+async function getSourcePdf(dayKey){if(pdfCache.has(dayKey))return pdfCache.get(dayKey);const p=pdfjsLib.getDocument(weeklyByKey(dayKey).pdf).promise;pdfCache.set(dayKey,p);return p}
+function renderPdfObservers(pages,startPage){
+ const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
+ const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const plan=getPlan(),d=plan.portions.find(x=>n>=x.pages[0]&&n<=x.pages[1])||plan.portions[0],idx=plan.portions.indexOf(d);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(plan,d,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
  const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
 }
-async function renderPage(pdf,wrap,first){try{const page=await pdf.getPage(Number(wrap.dataset.page)-first+1),base=page.getViewport({scale:1}),width=Math.min(980,Math.max(280,wrap.clientWidth||760)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,2),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'}catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}}
+async function renderPage(wrap){
+ try{
+  const source=weeklyByKey(wrap.dataset.sourceDay),pdf=await getSourcePdf(source.key),quranPage=Number(wrap.dataset.page),page=await pdf.getPage(quranPage-source.pages[0]+1),base=page.getViewport({scale:1}),width=Math.min(980,Math.max(280,wrap.clientWidth||760)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,2),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'
+ }catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}
+}
 function route(){
  const m=location.hash.match(/^#read\/(weekly|biweekly|fourweekly)\/(friday|saturday|sunday|monday|tuesday|wednesday|thursday|weekly-\d+|biweekly-\d+|fourweekly-\d+)$/);
  if(m){const p=buildPlan(m[1]),raw=m[2];reader(m[1],raw);return}home();
