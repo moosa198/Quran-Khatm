@@ -9,9 +9,5 @@
   "theme_color":"#17324D",
   "description":"A clean weekly Qur’an reading and listening companion.",
   "orientation":"portrait-primary",
-  "icons":[{"src":"icons/mushaf.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}],
-  "shortcuts":[
-    {"name":"Today","short_name":"Today","url":"./#read/friday","icons":[{"src":"icons/mushaf.svg","sizes":"any","type":"image/svg+xml"}]},
-    {"name":"Weekly portions","short_name":"Week","url":"./","icons":[{"src":"icons/mushaf.svg","sizes":"any","type":"image/svg+xml"}]}
-  ]
+  "icons":[{"src":"icons/mushaf.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
