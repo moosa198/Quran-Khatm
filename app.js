@@ -26,13 +26,9 @@ function completionReady(plan,d){const k=completionKey(plan.id,d.key);return !!p
 function setDone(mapKey,planId,key){const m=safeGet(mapKey,{})||{};m[completionKey(planId,key)]=Date.now();safeSet(mapKey,m);return m;}
 function completedCount(plan){return plan.portions.filter(p=>isCompleted(plan.id,p.key)).length;}
 function portionProgress(plan,d){
- const key=completionKey(plan.id,d.key);
  if(isCompleted(plan.id,d.key))return 100;
  const last=safeGet(KEY+'last',{}),page=last?.plan===plan.id&&last.key===d.key?Number(last.page)||0:0;
- const pagePct=page>=d.pages[0]?Math.max(0,Math.min(100,((page-d.pages[0]+1)/(d.pages[1]-d.pages[0]+1))*100)):0;
- const audio=Number(safeGet(KEY+'audio:'+plan.id+':'+d.key,0))||0;
- const duration=d.duration||1,audioPct=Math.max(0,Math.min(100,audio/duration*100));
- return Math.round(Math.max(pagePct,audioPct));
+ return page>=d.pages[0]?Math.max(0,Math.min(100,Math.round(((page-d.pages[0]+1)/(d.pages[1]-d.pages[0]+1))*100))):0;
 }
 const QURAN_FIRST=2,QURAN_LAST=849,QURAN_PAGES=848;
 const DAY_NAMES=['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday'];
