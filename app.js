@@ -175,12 +175,21 @@ function planHome(){
  document.querySelectorAll('[data-guidance]').forEach(b=>b.onclick=()=>showGuidance(b.dataset.guidance||'niyyah'));
  document.querySelectorAll('[data-untick]').forEach(b=>b.onclick=(e)=>{e.preventDefault();e.stopPropagation();unmarkCompleted(plan.id,b.dataset.untick);planHome();});
 }
-function reader(planIdValue,key){
+function preludeSeen(planId,key){return !!safeGet(KEY+'prelude:'+planId+':'+key,false)}
+function setPreludeSeen(planId,key){safeSet(KEY+'prelude:'+planId+':'+key,true)}
+function renderPrelude(plan,d,index){
+ const app=document.querySelector('#app');
+ app.innerHTML='<main class="reading-prelude"><header class="prelude-header"><a class="back" href="#home">'+icon('back')+'<span>Home</span></a><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button></header><div class="prelude-inner"><p class="guidance-kicker">BEFORE TILĀWAH</p><div class="prelude-arabic" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><h1>'+d.label+'</h1><p class="prelude-surahs">'+(d.surahLabel||d.surahs||d.name)+'</p><p class="prelude-intro">Take a moment before you begin. Renew your niyyah, observe the adab of the Qur’an, and ask Allah to make this tilāwah a means of amal.</p><div class="prelude-path"><button type="button" data-guidance="niyyah"><b>Niyyah</b><span>Why am I reciting?</span><i>→</i></button><button type="button" data-guidance="adab"><b>Adab</b><span>How will I approach it?</span><i>→</i></button><button type="button" data-guidance="amal"><b>Amal</b><span>What will I carry into life?</span><i>→</i></button></div><button class="prelude-begin" type="button" id="begin-tilawah">Begin tilāwah <span>→</span></button><p class="prelude-time">'+habitTime(d.duration)+' · '+(d.pages[1]-d.pages[0]+1)+' pages</p></div></main>';
+ document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
+ document.querySelectorAll('[data-guidance]').forEach(b=>b.onclick=()=>showGuidance(b.dataset.guidance||'niyyah'));
+ document.querySelector('#begin-tilawah').onclick=()=>{setPreludeSeen(plan.id,d.key);reader(plan.id,d.key,true)};
+}
+function reader(planIdValue,key,skipPrelude=false){
  setPlan(planIdValue);
- const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index],saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{})||{},mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
+ const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index];if(!skipPrelude&&!preludeSeen(plan.id,d.key)){renderPrelude(plan,d,index);return}const saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{})||{},mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
  const hasPdf=!!d.pdf;
  document.querySelector('#app').innerHTML=`
- <div class="reader">
+ <div class="reader" data-portion-key="${d.key}">
   <header class="topbar">
    <a class="back" href="#home">${icon('back')}<span>Home</span></a>
    <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}</small></div>
@@ -242,13 +251,17 @@ function showCompletion(plan,d,index){
    </div>`:`
    <div class="completion-inner">
     <div class="completion-check">✓</div>
-    <p class="completion-kicker">RECITATION COMPLETE</p>
-    <h2>Alhamdulillah.</h2>
-    <p>Alhamdulillah, you have completed this day's recitation.</p>
-    <div class="completion-stat">${done} of ${plan.portions.length} portions completed</div>
-    <p class="completion-subtle">One day, one āyah, one return to Allah's words.</p>
-    <a class="completion-button" href="#home">Done</a>
+    <p class="completion-kicker">ALḤAMDULILLĀH</p>
+    <h2>Carry the Qur’an with you.</h2>
+    <p>You have reached the end of this portion. Before you move on, take a moment for shukr, tadabbur and amal.</p>
+    <div class="completion-reflections">
+      <div><b>Shukr</b><span>Thank Allah for the tawfīq to recite His words.</span></div>
+      <div><b>Tadabbur</b><span>What āyah, meaning or reminder do you want to keep close?</span></div>
+      <div><b>Amal</b><span>What can you put into practice from what you have recited?</span></div>
+    </div>
+    <div class="completion-actions"><button class="completion-button" type="button" data-post-guidance="niyyah">Return to niyyah & adab</button><a class="completion-button" href="#home">Continue your journey</a></div>
    </div>`;
+ panel.querySelector('[data-post-guidance]')?.addEventListener('click',()=>showGuidance('niyyah'));
  if(last)window.scrollTo({top:0,behavior:'smooth'});else panel.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function maybeCompleteFromPage(plan,d,index,page){
@@ -327,7 +340,7 @@ const pdfCache=new Map();
 async function getSourcePdf(dayKey){if(pdfCache.has(dayKey))return pdfCache.get(dayKey);const p=pdfjsLib.getDocument(weeklyByKey(dayKey).pdf).promise;pdfCache.set(dayKey,p);return p}
 function renderPdfObservers(pages,startPage){
  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
- const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const plan=getPlan(),d=plan.portions.find(x=>n>=x.pages[0]&&n<=x.pages[1])||plan.portions[0],idx=plan.portions.indexOf(d);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(plan,d,idx,n);maybeCompleteFromPage(plan,d,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
+ const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const activePlan=getPlan(),activeKey=document.querySelector('.reader')?.dataset?.portionKey,active=activePlan.portions.find(x=>x.key===activeKey)||activePlan.portions[0],idx=activePlan.portions.indexOf(active);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(activePlan,active,idx,n);maybeCompleteFromPage(activePlan,active,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
  const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
 }
 async function renderPage(wrap){
