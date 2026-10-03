@@ -346,13 +346,29 @@ document.addEventListener('click',e=>{if(!e.target.closest('.speed-control'))clo
  await renderPdf(d,startPage);
  if(initialBookmark)toast('Bookmark: page '+initialBookmark);
 }
+async function ensurePdfJs(){
+ if(window.pdfjsLib)return window.pdfjsLib;
+ if(window.__pdfJsLoading)return window.__pdfJsLoading;
+ window.__pdfJsLoading=new Promise((resolve,reject)=>{
+  const existing=document.querySelector('script[data-pdfjs]');
+  if(existing){existing.addEventListener('load',()=>resolve(window.pdfjsLib));existing.addEventListener('error',reject);return}
+  const script=document.createElement('script');
+  script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+  script.async=true;script.dataset.pdfjs='1';
+  script.onload=()=>resolve(window.pdfjsLib);script.onerror=reject;
+  document.head.appendChild(script);
+ });
+ return window.__pdfJsLoading;
+}
 async function renderPdf(d,startPage){
- const viewer=document.querySelector('#pdf-viewer');if(!window.pdfjsLib){viewer.innerHTML='<div class="error">PDF viewer unavailable.</div>';return}
- pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ const viewer=document.querySelector('#pdf-viewer');if(!viewer)return;
  try{
+  const pdfjs=await ensurePdfJs();
+  if(!pdfjs)throw new Error('PDF.js failed to load');
+  pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const pages=[];
   if(d.pdf){
-   const pdf=await pdfjsLib.getDocument(d.pdf).promise;
+   const pdf=await pdfjs.getDocument({url:new URL(d.pdf,document.baseURI).href}).promise;
    for(let n=d.pages[0];n<=Math.min(d.pages[1],d.pages[0]+pdf.numPages-1);n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.dataset.sourceDay=d.key;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
    renderPdfObservers(pages,startPage);
   }else{
@@ -366,7 +382,7 @@ async function renderPdf(d,startPage){
  }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Check the selected day’s PDF.</div>'}
 }
 const pdfCache=new Map();
-async function getSourcePdf(dayKey){if(pdfCache.has(dayKey))return pdfCache.get(dayKey);const p=pdfjsLib.getDocument(weeklyByKey(dayKey).pdf).promise;pdfCache.set(dayKey,p);return p}
+async function getSourcePdf(dayKey){if(pdfCache.has(dayKey))return pdfCache.get(dayKey);const p=pdfjsLib.getDocument({url:new URL(weeklyByKey(dayKey).pdf,document.baseURI).href}).promise;pdfCache.set(dayKey,p);return p}
 function renderPdfObservers(pages,startPage){
  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
  const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const activePlan=getPlan(),activeKey=document.querySelector('.reader')?.dataset?.portionKey,active=activePlan.portions.find(x=>x.key===activeKey)||activePlan.portions[0],idx=activePlan.portions.indexOf(active);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(activePlan,active,idx,n);maybeCompleteFromPage(activePlan,active,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
