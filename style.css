@@ -417,3 +417,14 @@ html[data-theme=dark] .speed-menu button[aria-checked="true"]{background:rgba(11
  .speed-menu{width:146px;}
  .plan-time{font-size:.7rem;margin-top:5px;}
 }
+
+/* Final minimalist habit UX */
+.plan-choice-main{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;width:100%;}
+.plan-choice-main b,.plan-choice-main small{grid-column:1;}
+.plan-time{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;margin-left:12px;color:var(--green);font-size:1rem;font-style:normal;font-variant-numeric:tabular-nums;font-weight:700;line-height:1.1;white-space:nowrap;}
+.plan-time::after{content:"per day";margin-top:3px;color:var(--muted);font-size:.58rem;font-weight:500;}
+@media(max-width:680px){
+ .plan-choice{padding:13px 14px;}
+ .plan-time{margin-left:9px;font-size:.9rem;}
+ .plan-time::after{font-size:.54rem;margin-top:2px;}
+}
