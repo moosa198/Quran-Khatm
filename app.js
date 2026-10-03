@@ -153,8 +153,8 @@ function planHome(){
    <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's recitation</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
   </section>
   <section class="journey-summary">
-   <div><span class="journey-label">Your tilāwah</span><strong>${done} of ${plan.portions.length}</strong><small>days of recitation visited</small></div>
-   <div class="journey-track" aria-label="${done} of ${plan.portions.length} days visited"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
+   <div><span class="journey-label">Your tilāwah</span><strong>${done} of ${plan.portions.length}</strong><small>days of recitation completed</small></div>
+   <div class="journey-track" aria-label="${done} of ${plan.portions.length} days of recitation"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your tilāwah journey'}</span><small>${plan.id==='weekly'?'7 days':'Day 1–'+plan.portions.length}</small></div>
