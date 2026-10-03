@@ -232,7 +232,6 @@ function reader(planIdValue,key,skipPrelude=false){
    ${next?`<a href="#read/${plan.id}/${next.key}" class="nav-day"><span>${next.label}</span> ›</a>`:'<span></span>'}
   </div>
   <div class="reader-bookmarks"><button id="bookmark-list-toggle" type="button" aria-expanded="false">Saved pages <span id="bookmark-count"></span>⌄</button><div id="bookmark-list-panel" hidden></div></div>
-  <div class="progress-line" aria-hidden="true"><span id="reading-progress"></span></div>
   <section id="pdf-viewer" class="pdf-viewer" aria-label="Qur’an pages"></section>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <section class="completion-panel" id="completion-panel" hidden></section>
@@ -362,35 +361,48 @@ async function ensurePdfJs(){
 }
 async function renderPdf(d,startPage){
  const viewer=document.querySelector('#pdf-viewer');if(!viewer)return;
+ const label=d.name||'today’s';
+ viewer.innerHTML='<div class="pdf-loading-shell" role="status" aria-live="polite"><div class="pdf-loading-mark" aria-hidden="true"></div><strong>Opening the Mushaf</strong><span id="pdf-loading-text">Preparing '+label+'’s pages…</span><div class="pdf-loading-track" aria-hidden="true"><span id="pdf-loading-progress"></span></div></div>';
  try{
   const pdfjs=await ensurePdfJs();
   if(!pdfjs)throw new Error('PDF.js failed to load');
   pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const pages=[];
   if(d.pdf){
-   const pdf=await pdfjs.getDocument({url:new URL(d.pdf,document.baseURI).href}).promise;
+   const loadingTask=pdfjs.getDocument({url:new URL(d.pdf,document.baseURI).href,rangeChunkSize:262144});
+   loadingTask.onProgress=({loaded,total})=>{
+    const bar=document.querySelector('#pdf-loading-progress'),text=document.querySelector('#pdf-loading-text');
+    if(!bar||!text)return;
+    if(total){const pct=Math.max(0,Math.min(100,Math.round((loaded/total)*100)));bar.style.width=pct+'%';text.textContent=pct<100?'Preparing '+label+'’s pages · '+pct+'%':'Preparing the first page…'}
+    else{text.textContent='Preparing '+label+'’s pages…'}
+   };
+   const pdf=await loadingTask.promise;
    for(let n=d.pages[0];n<=Math.min(d.pages[1],d.pages[0]+pdf.numPages-1);n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.dataset.sourceDay=d.key;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
-   renderPdfObservers(pages,startPage);
+   const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));
+   if(target)await renderPage(target);
+   renderPdfObservers(pages,startPage,target);
   }else{
-   viewer.innerHTML='<div class="schedule-note">This reading plan combines the existing Mushaf day files. Pages are shown continuously here; audio is proportionally mapped to the selected pages.</div>';
+   const note=document.createElement('div');note.className='schedule-note';note.textContent='This reading plan combines the existing Mushaf day files. Pages are shown continuously here; audio is proportionally mapped to the selected pages.';viewer.replaceChildren(note);
    for(let n=d.pages[0];n<=d.pages[1];n++){
     const source=WEEKLY_DAYS.find(w=>n>=w.pages[0]&&n<=w.pages[1])||WEEKLY_DAYS[0];
     const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.dataset.sourceDay=source.key;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap);
    }
-   renderPdfObservers(pages,startPage);
+   const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));
+   if(target)await renderPage(target);
+   renderPdfObservers(pages,startPage,target);
   }
- }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an PDF could not be opened. Check the selected day’s PDF.</div>'}
+ }catch(e){console.error(e);viewer.innerHTML='<div class="error">The Qur’an page could not be opened. Please try again.</div>'}
 }
 const pdfCache=new Map();
 async function getSourcePdf(dayKey){if(pdfCache.has(dayKey))return pdfCache.get(dayKey);const p=pdfjsLib.getDocument({url:new URL(weeklyByKey(dayKey).pdf,document.baseURI).href}).promise;pdfCache.set(dayKey,p);return p}
-function renderPdfObservers(pages,startPage){
- const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(e.target)}else if(e.target.dataset.done){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'1000px 0px'});pages.forEach(p=>observer.observe(p));
- const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const activePlan=getPlan(),activeKey=document.querySelector('.reader')?.dataset?.portionKey,active=activePlan.portions.find(x=>x.key===activeKey)||activePlan.portions[0],idx=activePlan.portions.indexOf(active);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(activePlan,active,idx,n);maybeCompleteFromPage(activePlan,active,idx,n);document.querySelector('#reading-progress').style.width=((n-Number(pages[0].dataset.page)+1)/(Number(pages[pages.length-1].dataset.page)-Number(pages[0].dataset.page)+1)*100)+'%'}}),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
- const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
+function renderPdfObservers(pages,startPage,initialTarget){
+ const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){if(!e.target.dataset.done)renderPage(e.target)}else if(e.target.dataset.done&&Math.abs(Number(e.target.dataset.page)-Number(window.currentQuranPage||startPage))>3){e.target.replaceChildren();delete e.target.dataset.done}}),{rootMargin:'700px 0px'});pages.forEach(p=>observer.observe(p));
+ const progress=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){const n=Number(e.target.dataset.page);window.currentQuranPage=n;const activePlan=getPlan(),activeKey=document.querySelector('.reader')?.dataset?.portionKey,active=activePlan.portions.find(x=>x.key===activeKey)||activePlan.portions[0],idx=activePlan.portions.indexOf(active);const r=document.querySelector('#page-range'),o=document.querySelector('#page-output');if(r){r.value=Math.min(Math.max(n,Number(r.min)),Number(r.max));o.value=n}saveLast(activePlan,active,idx,n);maybeCompleteFromPage(activePlan,active,idx,n)} }),{rootMargin:'-35% 0px -55% 0px'});pages.forEach(p=>progress.observe(p));
+ const target=initialTarget||pages.find(p=>Number(p.dataset.page)===Number(startPage));if(target)requestAnimationFrame(()=>target.scrollIntoView({block:'start'}));
 }
 async function renderPage(wrap){
  try{
-  const source=weeklyByKey(wrap.dataset.sourceDay),pdf=await getSourcePdf(source.key),quranPage=Number(wrap.dataset.page),page=await pdf.getPage(quranPage-source.pages[0]+1),base=page.getViewport({scale:1}),width=Math.min(760,Math.max(280,wrap.clientWidth||680)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,2),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'
+  const source=weeklyByKey(wrap.dataset.sourceDay),pdf=await getSourcePdf(source.key),quranPage=Number(wrap.dataset.page),page=await pdf.getPage(quranPage-source.pages[0]+1),base=page.getViewport({scale:1}),width=Math.min(760,Math.max(280,wrap.clientWidth||680)),scale=width/base.width,vp=page.getViewport({scale}),dpr=Math.min(devicePixelRatio||1,1.5),c=document.createElement('canvas');c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=vp.width+'px';c.style.height=vp.height+'px';await page.render({canvasContext:c.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;wrap.replaceChildren(c);wrap.dataset.done='1'
  }catch(e){wrap.innerHTML='<div class="error">Page unavailable.</div>'}
 }
 function openingPage(){
