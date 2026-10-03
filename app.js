@@ -162,45 +162,48 @@ function planHome(){
  const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),done=completedCount(plan);
  const foundIncomplete=plan.portions.findIndex(p=>!isCompleted(plan.id,p.key)),firstIncomplete=foundIncomplete<0?0:foundIncomplete;
  const continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):firstIncomplete;
- const continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{})||{},hasStarted=!!(saved?.plan===plan.id||done>0);
+ const continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],hasStarted=!!(saved?.plan===plan.id||done>0);
  const start=ensurePlanStart(plan.id),elapsed=daysBetweenDates(start,new Date()),dayNumber=Math.min(plan.portions.length,elapsed+1),daysRemaining=Math.max(0,plan.portions.length-dayNumber),behind=Math.max(0,dayNumber-done-1);
  const journeyStatus=done===plan.portions.length?'Khatm complete':behind>0?behind+' day'+(behind===1?'':'s')+' behind':'On pace';
- document.querySelector('#app').innerHTML=` 
- <main class="home">
+ const primary=hasStarted?continuePortion:todayPortion;
+ document.querySelector('#app').innerHTML=`
+ <main class="home home-clean">
   <header class="home-header">
    <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
    <div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <div class="plan-change"><span>Tilāwah rhythm · ${plan.name} <small>· ${planDailyTime(plan.id)}/day</small></span><a href="#choose">Change rhythm</a></div>
-  <section class="hero-actions">
-   <a class="action-card primary" href="#read/${plan.id}/${(hasStarted?continuePortion:todayPortion).key}"><span class="action-icon">${hasStarted?'↗':'▣'}</span><span><b>${hasStarted?'Return to your tilāwah':"Start today's tilāwah"}</b><small>${(hasStarted?continuePortion:todayPortion).label}${saved?.plan===plan.id&&saved?.page?' · page '+saved.page:''} · ${habitTime((hasStarted?continuePortion:todayPortion).duration)}</small></span></a>
-   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's recitation</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
+
+  <div class="home-plan-line">
+   <span>${plan.name} <small>· ${planDailyTime(plan.id)}/day</small></span>
+   <a href="#choose">Change</a>
+  </div>
+
+  <section class="home-start">
+   <a class="home-start-main" href="#read/${plan.id}/${primary.key}">
+    <span class="home-start-icon">${hasStarted?'↗':'▣'}</span>
+    <span><b>${hasStarted?'Continue your tilāwah':"Start today's tilāwah"}</b><small>${primary.label}${saved?.plan===plan.id&&saved?.page?' · page '+saved.page:''} · ${habitTime(primary.duration)}</small></span>
+    <span class="home-start-arrow">→</span>
+   </a>
+   <a class="home-today" href="#read/${plan.id}/${todayPortion.key}"><span>Today</span><b>${todayPortion.label}</b><small>${habitTime(todayPortion.duration)}</small></a>
   </section>
-  <section class="journey-summary">
-   <div class="journey-summary-main"><span class="journey-label">Your tilāwah</span><strong>Day ${dayNumber} of ${plan.portions.length}</strong><small>${done} completed · ${daysRemaining} day${daysRemaining===1?'':'s'} remaining</small></div>
-   <div class="journey-status"><span>${journeyStatus}</span><small>Started ${start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</small></div>
-   <div class="journey-track" aria-label="${done} of ${plan.portions.length} portions completed"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
+
+  <section class="home-progress" aria-label="Khatm progress">
+   <div class="home-progress-top">
+    <strong>Day ${dayNumber} of ${plan.portions.length}</strong>
+    <span>${done} complete · ${daysRemaining} remaining</span>
+    <b>${journeyStatus}</b>
+   </div>
+   <div class="journey-track"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
   </section>
-  <section class="day-section">
-   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your tilāwah journey'}</span><small>${plan.id==='weekly'?'7 days':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Days of recitation">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}<em class="habit-time">· ${habitTime(d.duration)}</em></b><small>${d.factor?'Pages '+d.pages[0]+'–'+d.pages[1]+' · '+(d.surahLabel||d.surahs):d.surahLabel||d.surahs}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Reopen ${d.label}">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
-  </section>
-  <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
-   <div class="section-heading"><span>Āyāt to return to</span><small>Bookmarked pages</small></div>
-   <div class="bookmark-list">${plan.portions.flatMap(d=>{const raw=marks[plan.id+':'+d.key],pages=Array.isArray(raw)?raw:raw?[raw]:[];return pages.map(page=>`<a href="#read/${plan.id}/${d.key}">Page ${page} <span>${d.label}</span><b>${icon('next')}</b></a>`)}).join('')}</div>
-  </section>
-  <section class="guidance-entry" aria-label="Before tilāwah"><div class="guidance-entry-copy"><b>Before tilāwah</b><small>Three simple doors into the Qur’an: intention, adab and amal.</small></div><div class="guidance-links"><button type="button" data-guidance="niyyah">Niyyah</button><button type="button" data-guidance="adab">Adab</button><button type="button" data-guidance="amal">Amal</button></div></section>\n  <section class="priority-note" id="install-note">
-   <span><b>Keep the Qur'an close</b><small id="install-text">Add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
-   <button class="install-btn" id="install" type="button">Add to Home Screen</button>
-   <span class="priority-mark" aria-hidden="true">القرآن</span>
+
+  <section class="day-section home-days">
+   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your tilāwah'}</span><small>${plan.id==='weekly'?'7 days':'Day 1–'+plan.portions.length}</small></div>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Days of recitation">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===today?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}<em class="habit-time"> · ${habitTime(d.duration)}</em></b><small>${d.factor?'Pages '+d.pages[0]+'–'+d.pages[1]+' · '+(d.surahLabel||d.surahs):d.surahLabel||d.surahs}</small></span><span class="day-actions"><span class="tile-progress-label">${pct>0&&!complete?pct+'%':''}</span><span class="chevron">${icon('next')}</span></span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
   </section>
  </main>`;
- install();
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
- document.querySelectorAll('[data-guidance]').forEach(b=>b.onclick=()=>showGuidance(b.dataset.guidance||'niyyah'));
- document.querySelectorAll('[data-untick]').forEach(b=>b.onclick=(e)=>{e.preventDefault();e.stopPropagation();unmarkCompleted(plan.id,b.dataset.untick);planHome();});
 }
 function preludeSeen(planId,key){return !!safeGet(KEY+'prelude:'+planId+':'+key,false)}
 function setPreludeSeen(planId,key){safeSet(KEY+'prelude:'+planId+':'+key,true)}
