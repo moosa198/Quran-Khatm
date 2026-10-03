@@ -248,12 +248,10 @@ html[data-theme=dark] .motivation-placeholder{background:#1d2b30}
 .topbar-offline{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:var(--page);color:var(--green);display:grid;place-items:center;cursor:pointer;font-size:1.05rem;}
 .topbar-offline.active{border-color:#9dbbb7;background:rgba(53,109,104,.08);}
 .topbar-offline:disabled{opacity:.55;cursor:wait;}
-.progress-line{height:3px;position:sticky;top:64px;z-index:19;background:var(--line);opacity:1;}
-.progress-line span{background:var(--green);transition:width .15s ease;}
 .reader-tools{display:none!important;}
 .back{font-size:.92rem;font-weight:650;gap:7px;min-height:46px;padding:0 7px 0 2px;}
 .player-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;}
-@media(max-width:680px){.topbar{min-height:64px;padding-left:6px;padding-right:6px;}.back{font-size:.88rem;padding-left:2px;}.back span{display:inline;}.topbar-actions{gap:4px;}.topbar-offline{width:40px;height:40px;}.progress-line{top:64px;}.player-label{font-size:.61rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:0;}}
+@media(max-width:680px){.topbar{min-height:64px;padding-left:6px;padding-right:6px;}.back{font-size:.88rem;padding-left:2px;}.back span{display:inline;}.topbar-actions{gap:4px;}.topbar-offline{width:40px;height:40px;}.player-label{font-size:.61rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-left:0;}}
 @media(max-width:430px){.back{font-size:.8rem;gap:4px;}.topbar-offline{width:38px;height:38px;}.player-label{font-size:.58rem;}}
 
 /* Daily portion tiles: spacious weekly grid, compact multiweek journey */
