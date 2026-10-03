@@ -377,6 +377,7 @@ async function renderPdf(d,startPage){
     else{text.textContent='Preparing '+label+'’s pages…'}
    };
    const pdf=await loadingTask.promise;
+   pdfCache.set(d.key,Promise.resolve(pdf));
    for(let n=d.pages[0];n<=Math.min(d.pages[1],d.pages[0]+pdf.numPages-1);n++){const wrap=document.createElement('div');wrap.className='pdf-page';wrap.dataset.page=n;wrap.dataset.sourceDay=d.key;wrap.innerHTML='<div class="page-loading">Page '+n+'</div>';viewer.appendChild(wrap);pages.push(wrap)}
    const target=pages.find(p=>Number(p.dataset.page)===Number(startPage));
    if(target)await renderPage(target);
