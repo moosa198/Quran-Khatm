@@ -241,6 +241,11 @@ function showCompletion(plan,d,index){
     <h2>Alhamdulillah.</h2>
     <p>You have reached the end of this tilāwah cycle. May Allah accept your recitation and keep you close to His Book.</p>
     <div class="completion-stat">${done} / ${plan.portions.length} portions</div>
+    <div class="completion-reflections">
+      <div><b>Shukr</b><span>Thank Allah for the tawfīq to complete this khatm.</span></div>
+      <div><b>Tadabbur</b><span>What āyah, meaning or reminder will you carry forward?</span></div>
+      <div><b>Amal</b><span>Choose one thing from the Qur’an to put into practice.</span></div>
+    </div>
     <div class="dua-card">
       <div class="dua-heading">Khatm du'a</div>
       <p>Listen to Habib Umar's khatm du'a from 12:40–33:55.</p>
