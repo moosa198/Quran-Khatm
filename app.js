@@ -11,6 +11,7 @@ const WEEKLY_DAYS=[
 const PLANS={weekly:{id:'weekly',name:'7-day khatm',short:'7 days',count:7},biweekly:{id:'biweekly',name:'14-day khatm',short:'14 days',count:14},fourweekly:{id:'fourweekly',name:'28-day khatm',short:'28 days',count:28}};
 const KEY='weeklyQuran:';
 const PLAN_CHOSEN=KEY+'planChosen';
+const PLAN_START_KEY=KEY+'planStart:';
 const COMPLETED_KEY=KEY+'completed';
 const PAGE_DONE_KEY=KEY+'pageDone';
 const AUDIO_DONE_KEY=KEY+'audioDone';
@@ -21,7 +22,7 @@ const completionKey=(planId,key)=>planId+':'+key;
 const isCompleted=(planId,key)=>!!completedMap()[completionKey(planId,key)];
 function markCompleted(planId,key){const m=completedMap();m[completionKey(planId,key)]={completedAt:Date.now()};safeSet(COMPLETED_KEY,m);return m;}
 function unmarkCompleted(planId,key){const m=completedMap();delete m[completionKey(planId,key)];safeSet(COMPLETED_KEY,m);}
-function completionReady(plan,d){const k=completionKey(plan.id,d.key);return !!pageDoneMap()[k]||!!audioDoneMap()[k];}
+function completionReady(plan,d){const k=completionKey(plan.id,d.key);return !!pageDoneMap()[k];}
 function setDone(mapKey,planId,key){const m=safeGet(mapKey,{})||{};m[completionKey(planId,key)]=Date.now();safeSet(mapKey,m);return m;}
 function completedCount(plan){return plan.portions.filter(p=>isCompleted(plan.id,p.key)).length;}
 function portionProgress(plan,d){
@@ -59,13 +60,8 @@ function buildPlan(id){
 }
 function getPlan(){return buildPlan(planId())}
 function todayIndex(plan){
- const now=new Date(),weekday=(now.getDay()+2)%7; // Friday is day zero.
- const friday=new Date(now.getFullYear(),now.getMonth(),now.getDate()-weekday);
- const anchor=new Date(2026,0,2); // A Friday anchor for repeating multi-week cycles.
- const calendarDays=Math.round((Date.UTC(friday.getFullYear(),friday.getMonth(),friday.getDate())-Date.UTC(anchor.getFullYear(),anchor.getMonth(),anchor.getDate()))/86400000);
- const weeks=Math.floor(calendarDays/7);
- const cycleWeek=((weeks%Math.ceil(plan.cycleDays/7))+Math.ceil(plan.cycleDays/7))%Math.ceil(plan.cycleDays/7);
- return cycleWeek*7+weekday;
+ const start=ensurePlanStart(plan.id),elapsed=daysBetweenDates(start,new Date());
+ return elapsed%plan.portions.length;
 }
 function portionFromRoute(plan,raw){
  if(plan.id==='weekly')return plan.portions.findIndex(p=>p.key===raw);
@@ -75,7 +71,36 @@ const prefersDark=()=>window.matchMedia?window.matchMedia('(prefers-color-scheme
 const getTheme=()=>document.documentElement.dataset.theme||(prefersDark()?'dark':'light');
 function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(KEY+'theme',t)}catch{};document.querySelectorAll('[data-theme-toggle]').forEach(b=>{b.setAttribute('aria-label',t==='dark'?'Switch to light mode':'Switch to dark mode');b.title=t==='dark'?'Light mode':'Dark mode';b.textContent=icon(t==='dark'?'sun':'moon')})}
 function icon(name){if(name==='bookmark'||name==='bookmarked')return '<svg class="bookmark-glyph" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M6 4.75A1.75 1.75 0 0 1 7.75 3h8.5A1.75 1.75 0 0 1 18 4.75V21l-6-3.75L6 21V4.75Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';return({back:'‹',next:'›',play:'▶',pause:'Ⅱ',sun:'☼',moon:'☾',expand:'⛶',exit:'×',save:'⇩',check:'✓'})[name]||'·'}
-function setPlan(id){if(!PLANS[id])id='weekly';safeSet(KEY+'plan',id);safeSet(PLAN_CHOSEN,true)}
+function dateKey(date){const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,'0'),d=String(date.getDate()).padStart(2,'0');return y+'-'+m+'-'+d}
+function parseDateKey(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value||'')))return null;const [y,m,d]=String(value).split('-').map(Number);const date=new Date(y,m-1,d);return Number.isNaN(date.getTime())?null:date}
+function daysBetweenDates(from,to){const a=new Date(from.getFullYear(),from.getMonth(),from.getDate()),b=new Date(to.getFullYear(),to.getMonth(),to.getDate());return Math.max(0,Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000))}
+function planStart(id){return parseDateKey(safeGet(PLAN_START_KEY+id,null))}
+function ensurePlanStart(id,fallback=null){const existing=planStart(id);if(existing)return existing;const source=fallback||new Date();safeSet(PLAN_START_KEY+id,dateKey(source));return source}
+function migratePlanProgress(fromId,toId){
+ if(!fromId||fromId===toId)return;
+ const from=buildPlan(fromId),to=buildPlan(toId);
+ const sourceRanges=from.portions.filter(p=>isCompleted(from.id,p.key)).map(p=>p.pages).sort((a,b)=>a[0]-b[0]);
+ if(sourceRanges.length){
+  const merged=[];
+  sourceRanges.forEach(r=>{const last=merged[merged.length-1];if(last&&r[0]<=last[1]+1)last[1]=Math.max(last[1],r[1]);else merged.push([r[0],r[1]])});
+  const covered=r=>merged.some(m=>r[0]>=m[0]&&r[1]<=m[1]);
+  const map=completedMap();
+  to.portions.forEach(p=>{if(covered(p.pages))map[completionKey(to.id,p.key)]={completedAt:Date.now(),migratedFrom:fromId}});
+  safeSet(COMPLETED_KEY,map);
+ }
+ const last=safeGet(KEY+'last',null);
+ if(last?.plan===fromId&&Number.isFinite(Number(last.page)))safeSet(KEY+'lastPage',Number(last.page));
+ const fromStart=planStart(fromId);
+ if(fromStart&&!planStart(toId))safeSet(PLAN_START_KEY+toId,dateKey(fromStart));
+}
+function setPlan(id){
+ if(!PLANS[id])id='weekly';
+ const previous=planId();
+ if(previous!==id)migratePlanProgress(previous,id);
+ safeSet(KEY+'plan',id);
+ ensurePlanStart(id,planStart(previous)||new Date());
+ safeSet(PLAN_CHOSEN,true);
+}
 function install(){
  let prompt=null;const note=document.querySelector('#install-note'),button=document.querySelector('#install'),textEl=document.querySelector('#install-text');
  const isInstalled=()=>((window.matchMedia?window.matchMedia('(display-mode: standalone)').matches:false)||window.navigator.standalone===true);
@@ -138,7 +163,12 @@ function showGuidance(focus='niyyah'){
 }
 
 function planHome(){
- const plan=getPlan(),today=todayIndex(plan),defaultIndex=plan.id==='weekly'?today:0,saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[defaultIndex],marks=safeGet(KEY+'bookmarks',{})||{},done=completedCount(plan);
+ const plan=getPlan(),today=todayIndex(plan),saved=safeGet(KEY+'last'),done=completedCount(plan);
+ const foundIncomplete=plan.portions.findIndex(p=>!isCompleted(plan.id,p.key)),firstIncomplete=foundIncomplete<0?0:foundIncomplete;
+ const continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):firstIncomplete;
+ const continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[today],marks=safeGet(KEY+'bookmarks',{})||{},hasStarted=!!(saved?.plan===plan.id||done>0);
+ const start=ensurePlanStart(plan.id),elapsed=daysBetweenDates(start,new Date()),dayNumber=Math.min(plan.portions.length,elapsed+1),daysRemaining=Math.max(0,plan.portions.length-dayNumber),behind=Math.max(0,dayNumber-done-1);
+ const journeyStatus=done===plan.portions.length?'Khatm complete':behind>0?behind+' day'+(behind===1?'':'s')+' behind':'On pace';
  document.querySelector('#app').innerHTML=` 
  <main class="home">
   <header class="home-header">
@@ -149,16 +179,17 @@ function planHome(){
   </header>
   <div class="plan-change"><span>Tilāwah rhythm · ${plan.name} <small>· ${planDailyTime(plan.id)}/day</small></span><a href="#choose">Change rhythm</a></div>
   <section class="hero-actions">
-   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Return to your tilāwah</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''} · ${habitTime(continuePortion.duration)}</small></span></a>
+   <a class="action-card primary" href="#read/${plan.id}/${(hasStarted?continuePortion:todayPortion).key}"><span class="action-icon">${hasStarted?'↗':'▣'}</span><span><b>${hasStarted?'Return to your tilāwah':"Start today's tilāwah"}</b><small>${(hasStarted?continuePortion:todayPortion).label}${saved?.plan===plan.id&&saved?.page?' · page '+saved.page:''} · ${habitTime((hasStarted?continuePortion:todayPortion).duration)}</small></span></a>
    <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's recitation</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
   </section>
   <section class="journey-summary">
-   <div><span class="journey-label">Your tilāwah</span><strong>${done} of ${plan.portions.length}</strong><small>days of recitation completed</small></div>
-   <div class="journey-track" aria-label="${done} of ${plan.portions.length} days of recitation"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
+   <div class="journey-summary-main"><span class="journey-label">Your tilāwah</span><strong>Day ${dayNumber} of ${plan.portions.length}</strong><small>${done} completed · ${daysRemaining} day${daysRemaining===1?'':'s'} remaining</small></div>
+   <div class="journey-status"><span>${journeyStatus}</span><small>Started ${start.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</small></div>
+   <div class="journey-track" aria-label="${done} of ${plan.portions.length} portions completed"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
   </section>
   <section class="day-section">
    <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your tilāwah journey'}</span><small>${plan.id==='weekly'?'7 days':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Days of recitation">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}<em class="habit-time">· ${habitTime(d.duration)}</em></b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Reopen ${d.label}">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Days of recitation">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}<em class="habit-time">· ${habitTime(d.duration)}</em></b><small>${d.factor?'Pages '+d.pages[0]+'–'+d.pages[1]+' · '+(d.surahLabel||d.surahs):d.surahLabel||d.surahs}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Reopen ${d.label}">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
    <div class="section-heading"><span>Āyāt to return to</span><small>Bookmarked pages</small></div>
@@ -186,7 +217,8 @@ function renderPrelude(plan,d,index){
 }
 function reader(planIdValue,key,skipPrelude=false){
  setPlan(planIdValue);
- const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index];if(!skipPrelude&&!preludeSeen(plan.id,d.key)){renderPrelude(plan,d,index);return}const saved=safeGet(KEY+'last'),marks=safeGet(KEY+'bookmarks',{})||{},mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
+ const plan=buildPlan(planIdValue),index=portionFromRoute(plan,key);if(index<0){location.hash='';return}const d=plan.portions[index],saved=safeGet(KEY+'last'),globalPage=Number(safeGet(KEY+'lastPage',0))||0;
+ const marks=safeGet(KEY+'bookmarks',{})||{},mark=marks[plan.id+':'+d.key],prev=plan.portions[index-1],next=plan.portions[index+1];
  const hasPdf=!!d.pdf;
  document.querySelector('#app').innerHTML=`
  <div class="reader" data-portion-key="${d.key}">
@@ -239,20 +271,14 @@ function showCompletion(plan,d,index){
     <div class="completion-arabic" lang="ar" dir="rtl">الحمد لله</div>
     <p class="completion-kicker">KHATM CYCLE COMPLETE</p>
     <h2>Alhamdulillah.</h2>
-    <p>You have reached the end of this tilāwah cycle. May Allah accept your recitation and keep you close to His Book.</p>
+    <p>You have completed this tilāwah cycle. May Allah accept your recitation and keep you close to His Book.</p>
     <div class="completion-stat">${done} / ${plan.portions.length} portions</div>
     <div class="completion-reflections">
       <div><b>Shukr</b><span>Thank Allah for the tawfīq to complete this khatm.</span></div>
       <div><b>Tadabbur</b><span>What āyah, meaning or reminder will you carry forward?</span></div>
       <div><b>Amal</b><span>Choose one thing from the Qur’an to put into practice.</span></div>
     </div>
-    <div class="dua-card">
-      <div class="dua-heading">Khatm du'a</div>
-      <p>Listen to Habib Umar's khatm du'a from 12:40–33:55.</p>
-      <div class="dua-video"><iframe src="https://www.youtube.com/embed/2eLaO3g0H6E?start=760&end=2035&rel=0" title="Habib Umar khatm du'a" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-      <a class="dua-link" href="https://www.youtube.com/live/2eLaO3g0H6E?is=HsYXolI9r3jFXpz9" target="_blank" rel="noopener">Open the full khatm du'a ↗</a>
-    </div>
-    <a class="completion-button" href="#home">Return home</a>
+    <div class="completion-actions"><a class="completion-button" href="#home">Return home</a><button class="completion-button" type="button" data-guidance="niyyah">Before your next tilāwah</button></div>
    </div>`:`
    <div class="completion-inner">
     <div class="completion-check">✓</div>
@@ -267,6 +293,7 @@ function showCompletion(plan,d,index){
     <div class="completion-actions"><button class="completion-button" type="button" data-post-guidance="niyyah">Return to niyyah & adab</button><a class="completion-button" href="#home">Continue your journey</a></div>
    </div>`;
  panel.querySelector('[data-post-guidance]')?.addEventListener('click',()=>showGuidance('niyyah'));
+ panel.querySelector('[data-guidance]')?.addEventListener('click',()=>showGuidance('niyyah'));
  if(last)window.scrollTo({top:0,behavior:'smooth'});else panel.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function maybeCompleteFromPage(plan,d,index,page){
@@ -281,7 +308,7 @@ function setupDaySwipe(plan,index){
 function fmt(s){s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return h?h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0'):m+':'+String(sec).padStart(2,'0')}
 function habitTime(s){const minutes=Math.max(1,Math.round(Number(s||0)/60));if(minutes<60)return '≈ '+minutes+' min';const hours=Math.floor(minutes/60),mins=minutes%60;if(mins<10)return '≈ '+hours+' hr';return '≈ '+hours+'½ hr'}
 function planDailyTime(planId){const plan=PLANS[planId]||PLANS.weekly;const total=WEEKLY_DAYS.reduce((sum,d)=>sum+d.duration,0);return habitTime(total/plan.count)}
-function saveLast(plan,d,index,page){safeSet(KEY+'last',{plan:plan.id,key:d.key,index,page,updated:Date.now()})}
+function saveLast(plan,d,index,page){const value={plan:plan.id,key:d.key,index,page,updated:Date.now()};safeSet(KEY+'last',value);if(Number.isFinite(Number(page)))safeSet(KEY+'lastPage',Number(page))}
 function toast(message){const t=document.querySelector('#toast');if(!t)return;t.textContent=message;t.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),1800)}
 function getBookmarks(plan,d){const raw=(safeGet(KEY+'bookmarks',{})||{})[plan.id+':'+d.key];return Array.isArray(raw)?raw.map(Number):raw?[Number(raw)]:[]}
 function setBookmark(plan,d,page){const marks=safeGet(KEY+'bookmarks',{})||{},key=plan.id+':'+d.key,list=getBookmarks(plan,d),next=list.includes(Number(page))?list.filter(n=>n!==Number(page)):[...list,Number(page)].sort((a,b)=>a-b);if(next.length)marks[key]=next;else delete marks[key];safeSet(KEY+'bookmarks',marks);return next}
@@ -319,7 +346,8 @@ document.addEventListener('click',e=>{if(!e.target.closest('.speed-control'))clo
  const focus=document.querySelector('#focus');if(focus){focus.onclick=async()=>{if(document.fullscreenElement)await document.exitFullscreen?.();else await document.documentElement.requestFullscreen?.();updateFocus()};document.addEventListener('fullscreenchange',updateFocus)}
  function updateFocus(){if(!focus)return;const on=!!document.fullscreenElement;focus.innerHTML='<span>'+(on?'Exit focus':'Focus')+'</span>';focus.setAttribute('aria-label',on?'Exit focus mode':'Enter focus mode');focus.title=on?'Exit focus mode':'Focus mode'}
  const range=document.querySelector('#page-range'),output=document.querySelector('#page-output');range.oninput=()=>{output.value=range.value;document.querySelector('.pdf-page[data-page="'+range.value+'"]')?.scrollIntoView({behavior:'smooth',block:'start'});saveLast(plan,d,index,Number(range.value));window.currentQuranPage=Number(range.value)};
- await renderPdf(d,saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:d.pages[0]);
+ const startPage=saved?.plan===plan.id&&saved.index===index&&saved.page?saved.page:(globalPage>=d.pages[0]&&globalPage<=d.pages[1]?globalPage:d.pages[0]);
+ await renderPdf(d,startPage);
  if(initialBookmark)toast('Bookmark: page '+initialBookmark);
 }
 async function renderPdf(d,startPage){
