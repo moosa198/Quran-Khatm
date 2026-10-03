@@ -213,7 +213,8 @@ function reader(planIdValue,key){
  </div>`;
  
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
- document.querySelector('#reader-guidance')?.addEventListener('click',showGuidance);\n setupReader(plan,d,index,saved,mark);
+ document.querySelector('#reader-guidance')?.addEventListener('click',showGuidance);
+ setupReader(plan,d,index,saved,mark);
  setupDaySwipe(plan,index);
 }
 
@@ -335,7 +336,7 @@ async function renderPage(wrap){
 }
 function openingPage(){
  const chosen=planId();
- const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'A daily journey through the Qur’an':p.count===14?'More space for each day's recitation':'A gentler rhythm, with room to reflect')+'</small><em class="plan-time">'+planDailyTime(p.id)+'/day</em></span><span class="plan-choice-arrow">→</span></a>').join('');
+ const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'A daily journey through the Qur’an':p.count===14?'More space for each day’s recitation':'A gentler rhythm, with room to reflect')+'</small><em class="plan-time">'+planDailyTime(p.id)+'/day</em></span><span class="plan-choice-arrow">→</span></a>').join('');
  document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A lifelong companionship with the Qur’an</p></header><section class="opening-content"><p class="eyebrow">YOUR TILĀWAH</p><h1>Choose a rhythm for your tilāwah</h1><div class="motivation-card first-time-motivation"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>Begin with bismillah. Take a moment to renew your niyyah and begin in the name of Allah.</p><div class="motivation-placeholder"><span>Niyyah · Adab · Amal</span></div></div><p class="opening-copy">Choose a rhythm that fits your days. You can change it whenever you need.</p><div class="plan-choices">'+choices+'</div></section></main>';
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
  const motivation=document.querySelector('.first-time-motivation'); if(motivation && safeGet(PLAN_CHOSEN,false)) motivation.hidden=true;
