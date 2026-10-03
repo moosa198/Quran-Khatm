@@ -167,7 +167,7 @@ function planHome(){
  const journeyStatus=done===plan.portions.length?'Khatm complete':behind>0?behind+' day'+(behind===1?'':'s')+' behind':'On pace';
  const primary=hasStarted?continuePortion:todayPortion;
  document.querySelector('#app').innerHTML=`
- <main class="home home-clean">
+ <main class="home home-clean home-plan-${plan.id}">
   <header class="home-header">
    <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==='dark'?'sun':'moon')}</button>
    <div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
