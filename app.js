@@ -91,14 +91,14 @@ function scheduleSelector(plan){
 }
 
 
-function showGuidance(){
+function showGuidance(focus='niyyah'){
  const old=document.querySelector('.guidance-overlay');if(old){old.remove();return}
  const overlay=document.createElement('div');overlay.className='guidance-overlay';overlay.innerHTML=`
  <section class="guidance-sheet" role="dialog" aria-modal="true" aria-labelledby="guidance-title">
   <div class="guidance-handle"></div><button class="guidance-close" type="button" aria-label="Close">×</button>
-  <p class="guidance-kicker">NIYYAH · ADAB · AMAL</p><h2 id="guidance-title">Prepare your heart</h2>
+  <p class="guidance-kicker">BEFORE TILĀWAH</p><h2 id="guidance-title">Prepare your heart</h2>
   <p class="guidance-intro">A gentle companion for approaching the Qur’an with sincerity, presence and gratitude. These reflections are invitations, not a checklist or a condition for recitation.</p>
-  <details open><summary>Intentions for every action <span>8</span></summary><p class="guidance-source">Advice attributed to Ḥaḍrat Mawlānā Ilyās (رحمه الله)</p><ol>
+  <details data-guidance-section="amal"><summary>Amal · intentions for every action <span>8</span></summary><p class="guidance-source">Advice attributed to Ḥaḍrat Mawlānā Ilyās (رحمه الله)</p><ol>
    <li><b>Tawfīq</b><p>O Allah, You are giving me the tawfīq to do this amal, and its outcome is in Your hands.</p></li>
    <li><b>Itā‘ah and ittibā‘</b><p>O Allah, I am doing this amal to obey Your command and follow the Sunnah of Your beloved Nabī ﷺ. I reflect on the commands and Sunnahs connected to it.</p></li>
    <li><b>Faḍā’il and istihḍār</b><p>I remember the virtues of this amal and bring to mind the reward associated with it.</p></li>
@@ -108,7 +108,7 @@ function showGuidance(){
    <li><b>Qabūl and hidāyah</b><p>O Allah, accept this amal and make it a means of hidāyah for me and all humanity.</p></li>
    <li><b>Shukr and istighfār</b><p>After the amal, thank Allah and seek His forgiveness for not having performed it as it ought to have been.</p></li>
   </ol><p class="guidance-source">The narration “Actions are judged by intentions…” is recorded in Ṣaḥīḥ al-Bukhārī. The eight points above are presented as attributed advice, not as a prescribed formula.</p></details>
-  <details><summary>Niyyāt for reciting the Qur’an <span>9</span></summary><p class="guidance-source">Answered by Sayyidi Ḥabīb ʿUmar bin Ḥafīẓ (may Allah protect and benefit us by him)</p><ol>
+  <details data-guidance-section="niyyah"><summary>Niyyah · intentions for reciting the Qur’an <span>9</span></summary><p class="guidance-source">Answered by Sayyidi Ḥabīb ʿUmar bin Ḥafīẓ (may Allah protect and benefit us by him)</p><ol>
    <li>To listen to the speech of Allah as though hearing it conveyed by Allah on the tongue of His Messenger ﷺ.</li>
    <li>To have an intimate munājāt with Allah through His speech, the best means by which we commune with Him.</li>
    <li>To draw near to Allah through His speech.</li>
@@ -119,7 +119,7 @@ function showGuidance(){
    <li>To beautify my heart, mind and tongue with the speech of Allah.</li>
    <li>To join those in the heavens and earth who are reciting the Qur’an at that time.</li>
   </ol></details>
-  <details><summary>Adab of recitation <span>Dear Huffaz</span></summary><ul>
+  <details data-guidance-section="adab"><summary>Adab · etiquette of recitation <span>Dear Huffaz</span></summary><ul>
    <li>Prepare with cleanliness and respect; wudū’ is necessary when handling a physical muṣḥaf, while reciting from memory without touching it does not require wudū’ (the text recommends it as an etiquette).</li>
    <li>Choose a clean place and sit respectfully; facing the qiblah is recommended, not a condition.</li>
    <li>Begin with isti‘ādhah and basmalah. Recite with tajwīd, slowly and clearly.</li>
@@ -134,7 +134,7 @@ function showGuidance(){
   </ul><p class="guidance-source">A concise selection from the ḥuffāẓ guidance in <i>Dear Huffaz</i>. Specific practices in the source are not presented as universal obligations.</p></details>
   <div class="guidance-after"><b>After your recitation</b><p>Alḥamdulillāh for the tawfīq to recite. O Allah, accept it, forgive my shortcomings, and make the Qur’an a means of hidāyah.</p><small>An app-authored reflection, not a transmitted or prescribed du‘ā’.</small></div>
  </section>`;
- document.body.appendChild(overlay);const close=()=>overlay.remove();overlay.querySelector('.guidance-close').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});const onKey=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',onKey)}};document.addEventListener('keydown',onKey);
+ document.body.appendChild(overlay);const sections={niyyah:overlay.querySelector('[data-guidance-section="niyyah"]'),adab:overlay.querySelector('[data-guidance-section="adab"]'),amal:overlay.querySelector('[data-guidance-section="amal"]')};Object.entries(sections).forEach(([key,el])=>{if(el)el.open=key===focus});const close=()=>overlay.remove();overlay.querySelector('.guidance-close').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});const onKey=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',onKey)}};document.addEventListener('keydown',onKey);
 }
 
 function planHome(){
@@ -164,7 +164,7 @@ function planHome(){
    <div class="section-heading"><span>Āyāt to return to</span><small>Bookmarked pages</small></div>
    <div class="bookmark-list">${plan.portions.flatMap(d=>{const raw=marks[plan.id+':'+d.key],pages=Array.isArray(raw)?raw:raw?[raw]:[];return pages.map(page=>`<a href="#read/${plan.id}/${d.key}">Page ${page} <span>${d.label}</span><b>${icon('next')}</b></a>`)}).join('')}</div>
   </section>
-  <button class="guidance-entry" type="button" data-guidance><span><b>Niyyah · Adab · Amal</b><small>Prepare your heart before recitation</small></span><span aria-hidden="true">→</span></button>\n  <section class="priority-note" id="install-note">
+  <section class="guidance-entry" aria-label="Before tilāwah"><div class="guidance-entry-copy"><b>Before tilāwah</b><small>Three simple doors into the Qur’an: intention, adab and amal.</small></div><div class="guidance-links"><button type="button" data-guidance="niyyah">Niyyah</button><button type="button" data-guidance="adab">Adab</button><button type="button" data-guidance="amal">Amal</button></div></section>\n  <section class="priority-note" id="install-note">
    <span><b>Keep the Qur'an close</b><small id="install-text">Add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
    <button class="install-btn" id="install" type="button">Add to Home Screen</button>
    <span class="priority-mark" aria-hidden="true">القرآن</span>
@@ -172,6 +172,7 @@ function planHome(){
  </main>`;
  install();
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
+ document.querySelectorAll('[data-guidance]').forEach(b=>b.onclick=()=>showGuidance(b.dataset.guidance||'niyyah'));
  document.querySelectorAll('[data-untick]').forEach(b=>b.onclick=(e)=>{e.preventDefault();e.stopPropagation();unmarkCompleted(plan.id,b.dataset.untick);planHome();});
 }
 function reader(planIdValue,key){
@@ -213,7 +214,7 @@ function reader(planIdValue,key){
  </div>`;
  
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
- document.querySelector('#reader-guidance')?.addEventListener('click',showGuidance);
+ document.querySelector('#reader-guidance')?.addEventListener('click',()=>showGuidance('niyyah'));
  setupReader(plan,d,index,saved,mark);
  setupDaySwipe(plan,index);
 }
@@ -337,8 +338,9 @@ async function renderPage(wrap){
 function openingPage(){
  const chosen=planId();
  const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'A daily journey through the Qur’an':p.count===14?'More space for each day’s recitation':'A gentler rhythm, with room to reflect')+'</small><em class="plan-time">'+planDailyTime(p.id)+'/day</em></span><span class="plan-choice-arrow">→</span></a>').join('');
- document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A lifelong companionship with the Qur’an</p></header><section class="opening-content"><p class="eyebrow">YOUR TILĀWAH</p><h1>Choose a rhythm for your tilāwah</h1><div class="motivation-card first-time-motivation"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>Begin with bismillah. Take a moment to renew your niyyah and begin in the name of Allah.</p><div class="motivation-placeholder"><span>Niyyah · Adab · Amal</span></div></div><p class="opening-copy">Choose a rhythm that fits your days. You can change it whenever you need.</p><div class="plan-choices">'+choices+'</div></section></main>';
+ document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A lifelong companionship with the Qur’an</p></header><section class="opening-content"><p class="eyebrow">YOUR TILĀWAH</p><h1>Choose a rhythm for your tilāwah</h1><div class="motivation-card first-time-motivation"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>Begin with bismillah. Take a moment to renew your niyyah and begin in the name of Allah.</p><div class="motivation-placeholder"><button type="button" data-guidance="niyyah">Niyyah</button><button type="button" data-guidance="adab">Adab</button><button type="button" data-guidance="amal">Amal</button></div></div><p class="opening-copy">Choose a rhythm that fits your days. You can change it whenever you need.</p><div class="plan-choices">'+choices+'</div></section></main>';
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
+ document.querySelectorAll('[data-guidance]').forEach(b=>b.onclick=()=>showGuidance(b.dataset.guidance||'niyyah'));
  const motivation=document.querySelector('.first-time-motivation'); if(motivation && safeGet(PLAN_CHOSEN,false)) motivation.hidden=true;
 }
 function route(){
