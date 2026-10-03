@@ -8,7 +8,7 @@ const WEEKLY_DAYS=[
  {key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Fatḥ',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3',duration:3235},
  {key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās (Al-Mufassal)',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3',duration:3502}
 ];
-const PLANS={weekly:{id:'weekly',name:'1 week',short:'Weekly',count:7},biweekly:{id:'biweekly',name:'2 weeks',short:'Bi-weekly',count:14},fourweekly:{id:'fourweekly',name:'4 weeks',short:'4-weekly',count:28}};
+const PLANS={weekly:{id:'weekly',name:'7-day khatm',short:'7 days',count:7},biweekly:{id:'biweekly',name:'14-day khatm',short:'14 days',count:14},fourweekly:{id:'fourweekly',name:'28-day khatm',short:'28 days',count:28}};
 const KEY='weeklyQuran:';
 const PLAN_CHOSEN=KEY+'planChosen';
 const COMPLETED_KEY=KEY+'completed';
@@ -147,21 +147,21 @@ function planHome(){
    <div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div>
    <div class="title-rule"><i></i></div>
   </header>
-  <div class="plan-change"><span>Reading plan · ${plan.name} <small>· ${planDailyTime(plan.id)}/day</small></span><a href="#choose">Change plan</a></div>
+  <div class="plan-change"><span>Tilāwah rhythm · ${plan.name} <small>· ${planDailyTime(plan.id)}/day</small></span><a href="#choose">Change rhythm</a></div>
   <section class="hero-actions">
-   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Continue reading</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''} · ${habitTime(continuePortion.duration)}</small></span></a>
-   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's portion</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
+   <a class="action-card primary" href="#read/${plan.id}/${continuePortion.key}"><span class="action-icon">↗</span><span><b>Return to your tilāwah</b><small>${continuePortion.label}${saved?.page?' · page '+saved.page:''} · ${habitTime(continuePortion.duration)}</small></span></a>
+   <a class="action-card" href="#read/${plan.id}/${todayPortion.key}"><span class="action-icon">▣</span><span><b>Today's recitation</b><small>${todayPortion.label} · ${habitTime(todayPortion.duration)}</small></span></a>
   </section>
   <section class="journey-summary">
-   <div><span class="journey-label">Your khatm</span><strong>${done} of ${plan.portions.length}</strong><small>portions completed</small></div>
-   <div class="journey-track" aria-label="${done} of ${plan.portions.length} portions completed"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
+   <div><span class="journey-label">Your tilāwah</span><strong>${done} of ${plan.portions.length}</strong><small>days of recitation visited</small></div>
+   <div class="journey-track" aria-label="${done} of ${plan.portions.length} days visited"><span style="width:${plan.portions.length?Math.round(done/plan.portions.length*100):0}%"></span></div>
   </section>
   <section class="day-section">
-   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your journey'}</span><small>${plan.id==='weekly'?'7 portions':'Day 1–'+plan.portions.length}</small></div>
-   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Reading portions">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}<em class="habit-time">· ${habitTime(d.duration)}</em></b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Mark ${d.label} incomplete">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
+   <div class="section-heading"><span>${plan.id==='weekly'?'Friday → Thursday':'Your tilāwah journey'}</span><small>${plan.id==='weekly'?'7 days':'Day 1–'+plan.portions.length}</small></div>
+   <nav class="day-grid ${plan.id!=='weekly'?'long-grid':''}" aria-label="Days of recitation">${plan.portions.map((d,i)=>{const complete=isCompleted(plan.id,d.key),pct=portionProgress(plan,d);return `<a class="day-card ${complete?'completed ':''}${pct>0&&!complete?'in-progress ':''}${i===(plan.id==='weekly'?today:0)?'today':''}" href="#read/${plan.id}/${d.key}"><span class="day-no">${complete?'✓':d.number}</span><span class="day-copy"><b>${d.label}<em class="habit-time">· ${habitTime(d.duration)}</em></b><small>${d.surahLabel||d.surahs}${d.factor?'<span class="portion-detail">'+d.part+'/'+d.factor+'</span>':''}</small></span><span class="day-actions">${complete?`<button class="untick-btn" type="button" data-untick="${d.key}" aria-label="Reopen ${d.label}">Undo</button>`:`<span class="tile-progress-label">${pct>0?pct+'%':''}</span><span class="chevron">${icon('next')}</span>`}</span><span class="tile-progress" role="progressbar" aria-label="${d.label} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></span></a>`}).join('')}</nav>
   </section>
   <section class="bookmarks-section" ${Object.keys(marks).some(k=>k.startsWith(plan.id+':'))?'':'hidden'}>
-   <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
+   <div class="section-heading"><span>Āyāt to return to</span><small>Bookmarked pages</small></div>
    <div class="bookmark-list">${plan.portions.flatMap(d=>{const raw=marks[plan.id+':'+d.key],pages=Array.isArray(raw)?raw:raw?[raw]:[];return pages.map(page=>`<a href="#read/${plan.id}/${d.key}">Page ${page} <span>${d.label}</span><b>${icon('next')}</b></a>`)}).join('')}</div>
   </section>
   <button class="guidance-entry" type="button" data-guidance><span><b>Niyyah · Adab · Amal</b><small>Prepare your heart before recitation</small></span><span aria-hidden="true">→</span></button>\n  <section class="priority-note" id="install-note">
@@ -205,10 +205,10 @@ function reader(planIdValue,key){
     <button id="back10" class="mini-btn" aria-label="Back 10 seconds" title="Back 10 seconds">−10</button>
     <div class="track"><div class="time-row"><span id="time">0:00</span><span id="total-time">${fmt(d.duration)}</span></div><input id="seek" type="range" min="0" max="${d.duration}" value="0" step=".1" aria-label="Audio position"></div>
     <button id="forward10" class="mini-btn" aria-label="Forward 10 seconds" title="Forward 10 seconds">+10</button>
-    <div class="speed-control"><button id="speed" class="speed" type="button" aria-label="Playback speed" aria-haspopup="menu" aria-expanded="false">1×</button><div id="speed-menu" class="speed-menu" role="menu" hidden><div class="speed-menu-title">Playback speed</div><button type="button" role="menuitemradio" data-speed="0.5" aria-checked="false">0.5×</button><button type="button" role="menuitemradio" data-speed="0.75" aria-checked="false">0.75×</button><button type="button" role="menuitemradio" data-speed="1" aria-checked="true">1×</button><button type="button" role="menuitemradio" data-speed="1.25" aria-checked="false">1.25×</button></div></div>
+    <div class="speed-control"><button id="speed" class="speed" type="button" aria-label="Recitation speed" aria-haspopup="menu" aria-expanded="false">1×</button><div id="speed-menu" class="speed-menu" role="menu" hidden><div class="speed-menu-title">Playback speed</div><button type="button" role="menuitemradio" data-speed="0.5" aria-checked="false">0.5×</button><button type="button" role="menuitemradio" data-speed="0.75" aria-checked="false">0.75×</button><button type="button" role="menuitemradio" data-speed="1" aria-checked="true">1×</button><button type="button" role="menuitemradio" data-speed="1.25" aria-checked="false">1.25×</button></div></div>
     <button id="bookmark" class="audio-bookmark ${mark?'active':''}" aria-label="${mark?'Remove bookmark':'Bookmark current page'}" title="${mark?'Remove bookmark':'Bookmark current page'}">${icon(mark?'bookmarked':'bookmark')}</button>
    </div>
-   <div class="player-label">Sheikh Ahmed Dibaan · ${d.label} · Read along, or listen while you go about your day.</div>
+   <div class="player-label">Sheikh Ahmed Dibaan · ${d.label} · Follow the recitation, or listen as you go about your day.</div>
   </div>
  </div>`;
  
@@ -226,9 +226,9 @@ function showCompletion(plan,d,index){
  panel.innerHTML=last?`
    <div class="completion-inner khatm-complete">
     <div class="completion-arabic" lang="ar" dir="rtl">الحمد لله</div>
-    <p class="completion-kicker">KHATM COMPLETE</p>
+    <p class="completion-kicker">KHATM CYCLE COMPLETE</p>
     <h2>Alhamdulillah.</h2>
-    <p>You have completed this ${plan.name.toLowerCase()} Qur'an journey.</p>
+    <p>You have reached the end of this tilāwah cycle. May Allah accept your recitation and keep you close to His Book.</p>
     <div class="completion-stat">${done} / ${plan.portions.length} portions</div>
     <div class="dua-card">
       <div class="dua-heading">Khatm du'a</div>
@@ -240,11 +240,11 @@ function showCompletion(plan,d,index){
    </div>`:`
    <div class="completion-inner">
     <div class="completion-check">✓</div>
-    <p class="completion-kicker">PORTION COMPLETE</p>
+    <p class="completion-kicker">RECITATION COMPLETE</p>
     <h2>Alhamdulillah.</h2>
-    <p>Today's portion is complete.</p>
+    <p>Alhamdulillah, you have completed this day's recitation.</p>
     <div class="completion-stat">${done} of ${plan.portions.length} portions completed</div>
-    <p class="completion-subtle">One portion at a time.</p>
+    <p class="completion-subtle">One day, one āyah, one return to Allah's words.</p>
     <a class="completion-button" href="#home">Done</a>
    </div>`;
  if(last)window.scrollTo({top:0,behavior:'smooth'});else panel.scrollIntoView({behavior:'smooth',block:'center'});
@@ -335,8 +335,8 @@ async function renderPage(wrap){
 }
 function openingPage(){
  const chosen=planId();
- const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'One portion each day':p.count===14?'A gentler two-week pace':'A steady four-week pace')+'</small><em class="plan-time">'+planDailyTime(p.id)+'/day</em></span><span class="plan-choice-arrow">→</span></a>').join('');
- document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A quiet, consistent path through the Qur’an</p></header><section class="opening-content"><p class="eyebrow">BEGIN YOUR KHATM</p><h1>Choose your reading plan</h1><div class="motivation-card first-time-motivation"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>A short reminder will appear here the first time you open the app. Your video can be added later without changing the rest of the experience.</p><div class="motivation-placeholder"><span>Qur’an reminder</span></div></div><p class="opening-copy">Choose a pace that works for you. You can change your plan at any time.</p><div class="plan-choices">'+choices+'</div></section></main>';
+ const choices=Object.values(PLANS).map(p=>'<a class="plan-choice '+(chosen===p.id?'selected':'')+'" href="#plan/'+p.id+'"><span class="plan-choice-main"><b>'+p.name+'</b><small>'+(p.count===7?'A daily journey through the Qur’an':p.count===14?'More space for each day's recitation':'A gentler rhythm, with room to reflect')+'</small><em class="plan-time">'+planDailyTime(p.id)+'/day</em></span><span class="plan-choice-arrow">→</span></a>').join('');
+ document.querySelector('#app').innerHTML='<main class="opening"><header class="home-header"><button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">'+icon(getTheme()==='dark'?'sun':'moon')+'</button><div class="bismillah" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><div class="arabic-title" lang="ar" dir="rtl">القرآن الكريم</div><div class="title-rule"><i></i></div><p class="opening-kicker">A lifelong companionship with the Qur’an</p></header><section class="opening-content"><p class="eyebrow">YOUR TILĀWAH</p><h1>Choose a rhythm for your tilāwah</h1><div class="motivation-card first-time-motivation"><div class="motivation-label">BEFORE YOU BEGIN</div><h2>Let the Qur’an become part of your day.</h2><p>Begin with bismillah. Take a moment to renew your niyyah and begin in the name of Allah.</p><div class="motivation-placeholder"><span>Niyyah · Adab · Amal</span></div></div><p class="opening-copy">Choose a rhythm that fits your days. You can change it whenever you need.</p><div class="plan-choices">'+choices+'</div></section></main>';
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
  const motivation=document.querySelector('.first-time-motivation'); if(motivation && safeGet(PLAN_CHOSEN,false)) motivation.hidden=true;
 }
