@@ -441,3 +441,14 @@ html[data-theme=dark] .speed-menu button[aria-checked="true"]{background:rgba(11
 .guidance-sheet ol,.guidance-sheet ul{padding-left:1.3rem;margin:14px 0 8px}.guidance-sheet li{padding-left:4px;margin:0 0 14px;font-size:.87rem;line-height:1.55}.guidance-sheet li::marker{color:var(--green);font-weight:650}.guidance-sheet li p{margin:4px 0 0;color:var(--muted)}.guidance-sheet li b{font-weight:650}.guidance-source{font-size:.72rem;line-height:1.5;color:var(--muted);margin:10px 0}.guidance-after{margin-top:12px;padding:15px;border-radius:9px;background:var(--soft);font-size:.87rem;line-height:1.55}.guidance-after p{margin:6px 0}.guidance-after small{color:var(--muted);font-size:.7rem}
 html[data-theme=dark] .guidance-sheet{background:var(--darkpage);color:var(--darkink)}html[data-theme=dark] .guidance-after{background:#25343a}
 @media(min-width:700px){.guidance-overlay{align-items:center;padding:24px}.guidance-sheet{border-radius:16px;max-height:85vh}}
+
+
+.guidance-entry{display:block}
+.guidance-entry-copy{margin-bottom:10px}
+.guidance-entry-copy b,.guidance-entry-copy small{display:block}
+.guidance-entry-copy b{font-size:.84rem;font-weight:650}
+.guidance-entry-copy small{margin-top:3px;color:var(--muted);font-size:.72rem;line-height:1.45}
+.guidance-links{display:flex;gap:7px}
+.guidance-links button,.motivation-placeholder button{border:1px solid var(--line);background:var(--page);color:var(--ink);border-radius:999px;padding:7px 12px;font:inherit;font-size:.72rem;cursor:pointer}
+.guidance-links button:hover,.motivation-placeholder button:hover{border-color:var(--green);color:var(--green)}
+.motivation-placeholder{display:flex;align-items:center;justify-content:center;gap:7px;aspect-ratio:16/9}
