@@ -90,6 +90,53 @@ function scheduleSelector(plan){
  return '<div class="schedule-selector" role="group" aria-label="Reading schedule">'+Object.values(PLANS).map(p=>'<button class="schedule-option '+(p.id===plan.id?'active':'')+'" data-plan="'+p.id+'">'+p.name+'</button>').join('')+'</div>';
 }
 
+
+function showGuidance(){
+ const old=document.querySelector('.guidance-overlay');if(old){old.remove();return}
+ const overlay=document.createElement('div');overlay.className='guidance-overlay';overlay.innerHTML=`
+ <section class="guidance-sheet" role="dialog" aria-modal="true" aria-labelledby="guidance-title">
+  <div class="guidance-handle"></div><button class="guidance-close" type="button" aria-label="Close">×</button>
+  <p class="guidance-kicker">NIYYAH · ADAB · AMAL</p><h2 id="guidance-title">Prepare your heart</h2>
+  <p class="guidance-intro">A gentle companion for approaching the Qur’an with sincerity, presence and gratitude. These reflections are invitations, not a checklist or a condition for recitation.</p>
+  <details open><summary>Intentions for every action <span>8</span></summary><p class="guidance-source">Advice attributed to Ḥaḍrat Mawlānā Ilyās (رحمه الله)</p><ol>
+   <li><b>Tawfīq</b><p>O Allah, You are giving me the tawfīq to do this amal, and its outcome is in Your hands.</p></li>
+   <li><b>Itā‘ah and ittibā‘</b><p>O Allah, I am doing this amal to obey Your command and follow the Sunnah of Your beloved Nabī ﷺ. I reflect on the commands and Sunnahs connected to it.</p></li>
+   <li><b>Faḍā’il and istihḍār</b><p>I remember the virtues of this amal and bring to mind the reward associated with it.</p></li>
+   <li><b>Murāqabah</b><p>I ponder that Allah is watching me, hears me, knows what I am doing, and is with me.</p></li>
+   <li><b>Tawāḍu‘</b><p>O Allah, I am not deserving of this amal because of my sins. Through the acceptance of those performing it, accept my amal too.</p></li>
+   <li><b ik>Ikhlāṣ</b><p>O Allah, I am doing this amal only to please You.</p></li>
+   <li><b>Qabūl and hidāyah</b><p>O Allah, accept this amal and make it a means of hidāyah for me and all humanity.</p></li>
+   <li><b>Shukr and istighfār</b><p>After the amal, thank Allah and seek His forgiveness for not having performed it as it ought to have been.</p></li>
+  </ol><p class="guidance-source">The narration “Actions are judged by intentions…” is recorded in Ṣaḥīḥ al-Bukhārī. The eight points above are presented as attributed advice, not as a prescribed formula.</p></details>
+  <details><summary>Niyyāt for reciting the Qur’an <span>9</span></summary><p class="guidance-source">Answered by Sayyidi Ḥabīb ʿUmar bin Ḥafīẓ (may Allah protect and benefit us by him)</p><ol>
+   <li>To listen to the speech of Allah as though hearing it conveyed by Allah on the tongue of His Messenger ﷺ.</li>
+   <li>To have an intimate munājāt with Allah through His speech, the best means by which we commune with Him.</li>
+   <li>To draw near to Allah through His speech.</li>
+   <li>To open the door to ‘ilm through its sublime source: the speech of Allah.</li>
+   <li>To seek the downpour of Allah’s raḥmah, remembering Qur’an 7:204.</li>
+   <li>To use my time in the best way.</li>
+   <li>To seek the pleasure of the Prophet ﷺ.</li>
+   <li>To beautify my heart, mind and tongue with the speech of Allah.</li>
+   <li>To join those in the heavens and earth who are reciting the Qur’an at that time.</li>
+  </ol></details>
+  <details><summary>Adab of recitation <span>Dear Huffaz</span></summary><ul>
+   <li>Prepare with cleanliness and respect; wudū’ is necessary when handling a physical muṣḥaf, while reciting from memory without touching it does not require wudū’ (the text recommends it as an etiquette).</li>
+   <li>Choose a clean place and sit respectfully; facing the qiblah is recommended, not a condition.</li>
+   <li>Begin with isti‘ādhah and basmalah. Recite with tajwīd, slowly and clearly.</li>
+   <li>Give the Qur’an your full attention. Listen attentively and ponder its meanings (tadabbur).</li>
+   <li>Where appropriate, ask Allah for raḥmah at verses of mercy, seek refuge at verses of punishment, and glorify Him when His greatness is mentioned.</li>
+   <li>Recite audibly when suitable, but lower your voice if you may disturb someone, interrupt worship or invite showing off.</li>
+   <li>When you need to speak, finish the āyah if possible, pause respectfully, then resume with isti‘ādhah.</li>
+   <li>Hold and place a physical muṣḥaf respectfully; do not place it on the floor or where feet tread.</li>
+  </ul><p class="guidance-source">Adapted from “The Rights and Etiquettes of the Glorious Qur’an” in <i>Dear Huffaz</i>. Distinctions between necessary and recommended practices are retained.</p></details>
+  <details><summary>For ḥuffāẓ: preserving the Qur’an</summary><ul>
+   <li>Maintain regular tilāwah and murāja‘ah; seek a sustainable wird.</li><li>Recite in ṣalāh where able and keep revision connected to worship.</li><li>Have a daily portion reviewed by a qualified teacher or fellow ḥāfiẓ when possible.</li><li>Study meanings with reliable scholars and strive to live by the Qur’an.</li><li>Remain humble, sincere and of good character; seek the company and guidance of people of knowledge.</li><li>Remember the blessing of hifẓ with shukr, and turn to Allah with istighfār.</li>
+  </ul><p class="guidance-source">A concise selection from the ḥuffāẓ guidance in <i>Dear Huffaz</i>. Specific practices in the source are not presented as universal obligations.</p></details>
+  <div class="guidance-after"><b>After your recitation</b><p>Alḥamdulillāh for the tawfīq to recite. O Allah, accept it, forgive my shortcomings, and make the Qur’an a means of hidāyah.</p><small>An app-authored reflection, not a transmitted or prescribed du‘ā’.</small></div>
+ </section>`;
+ document.body.appendChild(overlay);const close=()=>overlay.remove();overlay.querySelector('.guidance-close').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});const onKey=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',onKey)}};document.addEventListener('keydown',onKey);
+}
+
 function planHome(){
  const plan=getPlan(),today=todayIndex(plan),defaultIndex=plan.id==='weekly'?today:0,saved=safeGet(KEY+'last'),continueIndex=saved?.plan===plan.id&&Number.isInteger(saved.index)?Math.min(saved.index,plan.portions.length-1):today,continuePortion=plan.portions[continueIndex],todayPortion=plan.portions[defaultIndex],marks=safeGet(KEY+'bookmarks',{})||{},done=completedCount(plan);
  document.querySelector('#app').innerHTML=` 
@@ -117,7 +164,7 @@ function planHome(){
    <div class="section-heading"><span>Bookmarks</span><small>Saved pages</small></div>
    <div class="bookmark-list">${plan.portions.flatMap(d=>{const raw=marks[plan.id+':'+d.key],pages=Array.isArray(raw)?raw:raw?[raw]:[];return pages.map(page=>`<a href="#read/${plan.id}/${d.key}">Page ${page} <span>${d.label}</span><b>${icon('next')}</b></a>`)}).join('')}</div>
   </section>
-  <section class="priority-note" id="install-note">
+  <button class="guidance-entry" type="button" data-guidance><span><b>Niyyah · Adab · Amal</b><small>Prepare your heart before recitation</small></span><span aria-hidden="true">→</span></button>\n  <section class="priority-note" id="install-note">
    <span><b>Keep the Qur'an close</b><small id="install-text">Add Qur'an Khatm to your home screen — or place it beside the apps you reach for first.</small></span>
    <button class="install-btn" id="install" type="button">Add to Home Screen</button>
    <span class="priority-mark" aria-hidden="true">القرآن</span>
@@ -137,7 +184,7 @@ function reader(planIdValue,key){
    <a class="back" href="#home">${icon('back')}<span>Home</span></a>
    <div class="day-title"><b>${d.label}</b><small>${d.surahLabel||d.surahs||d.name}${d.factor?'<span class=\"portion-detail\">'+d.part+'/'+d.factor+'</span>':''}</small></div>
    <div class="topbar-actions">
-    <button id="offline" class="topbar-offline" aria-label="Save this day for offline use" title="Save this day for offline use">${icon('save')}</button>
+    <button id="reader-guidance" class="topbar-guidance" type="button" aria-label="Intentions and adab" title="Intentions and adab">♡</button>\n    <button id="offline" class="topbar-offline" aria-label="Save this day for offline use" title="Save this day for offline use">${icon('save')}</button>
     <button data-theme-toggle class="icon-btn theme-btn" aria-label="Theme" title="Theme">${icon(getTheme()==="dark"?"sun":"moon")}</button>
    </div>
   </header>
@@ -166,7 +213,7 @@ function reader(planIdValue,key){
  </div>`;
  
  document.querySelector('[data-theme-toggle]').onclick=()=>setTheme(getTheme()==='dark'?'light':'dark');
- setupReader(plan,d,index,saved,mark);
+ document.querySelector('#reader-guidance')?.addEventListener('click',showGuidance);\n setupReader(plan,d,index,saved,mark);
  setupDaySwipe(plan,index);
 }
 
