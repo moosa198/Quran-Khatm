@@ -491,3 +491,14 @@ html[data-theme=dark] .guidance-sheet{background:var(--darkpage);color:var(--dar
  .completion-actions{flex-direction:column;}
  .completion-actions .completion-button{width:100%;}
 }
+
+/* Journey status: make the current position and recovery state easy to scan */
+.journey-summary{grid-template-columns:minmax(0,1fr) auto;align-items:end;}
+.journey-summary-main{display:flex;flex-direction:column;gap:2px;}
+.journey-status{display:flex;flex-direction:column;align-items:flex-end;gap:2px;color:var(--green);font-size:.76rem;font-weight:650;text-align:right;}
+.journey-status small{color:var(--muted);font-size:.68rem;font-weight:500;}
+@media(max-width:680px){
+  .journey-summary{grid-template-columns:minmax(0,1fr) auto;gap:8px;}
+  .journey-status{font-size:.68rem;}
+  .journey-status small{font-size:.6rem;}
+}
