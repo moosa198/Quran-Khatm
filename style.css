@@ -468,9 +468,6 @@ audio {
 .reader-tool:hover { border-color: var(--gold-soft); color: var(--green-950); }
 .reader-tool.saved { color: var(--green-900); border-color: var(--line-green); background: var(--green-50); }
 
-.reader-tool.translation-trigger { border-color: rgba(184,154,90,.62); color: var(--green-800); background: rgba(255,253,248,.88); }
-.reader-tool.translation-trigger:hover, .reader-tool.translation-trigger.is-active { border-color: var(--gold); color: var(--green-950); background: rgba(184,154,90,.12); }
-
 
 .reader-title {
   margin: 0;
@@ -869,21 +866,6 @@ audio {
   .play-control { width: 36px; height: 36px; border: 2px solid var(--green-900); background: var(--green-900); color: #fffdf8; box-shadow: 0 2px 7px rgba(31,54,42,.18); }
   .play-control:hover { background: var(--green-950); border-color: var(--green-950); }
   .audio-extra { flex: 0 0 auto; margin-left: auto; order: 3; display: flex; gap: 5px; }
-  .translation-player-control {
-    min-width: 74px;
-    height: 30px;
-    padding: 0 7px;
-    border-color: rgba(23,76,58,.38);
-    background: var(--paper);
-    color: var(--green-800);
-    box-shadow: 0 1px 4px rgba(31,54,42,.08);
-  }
-  .translation-player-control:hover,
-  .translation-player-control.is-active {
-    background: rgba(255,253,248,.95);
-    border-color: rgba(23,76,58,.38);
-    color: var(--green-950);
-  }
   .speed-control {
     min-width: 37px;
     height: 30px;
