@@ -1170,19 +1170,21 @@ audio {
 }
 .day-time {
   display: block;
-  margin-top: 7px;
+  margin-top: 4px;
   color: var(--muted);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  font-size: .67rem;
+  font-size: .57rem;
   font-style: normal;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 :root[data-theme="dark"] .day-time {
   color: var(--muted);
 }
 @media (max-width: 800px) {
   .day-time {
-    margin-top: 5px;
-    font-size: .62rem;
+    margin-top: 3px;
+    font-size: .53rem;
   }
 }
