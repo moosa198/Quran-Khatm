@@ -1011,3 +1011,175 @@ audio {
     color: var(--green-950);
   }
 }
+
+
+/* =========================
+   DARK MODE — complete app
+   ========================= */
+:root[data-theme="dark"] {
+  --ivory: #1d2023;
+  --ivory-deep: #24282c;
+  --paper: #292d31;
+  --paper-soft: #25292d;
+  --green-950: #eef0ed;
+  --green-900: #e0e5e0;
+  --green-800: #cbd3cc;
+  --green-700: #b8c3ba;
+  --green-100: #343a3f;
+  --green-50: #2c3136;
+  --gold: #cbb277;
+  --gold-soft: #ddcc9f;
+  --ink: #e4e7e4;
+  --muted: #a9b0ad;
+  --line: #464c51;
+  --line-green: #4a5750;
+  --shadow: 0 10px 30px rgba(0,0,0,.28);
+}
+
+:root[data-theme="dark"] body {
+  background: var(--ivory);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] body::before {
+  opacity: .055;
+  background-image:
+    linear-gradient(45deg, transparent 48%, rgba(221,204,159,.16) 49%, rgba(221,204,159,.16) 51%, transparent 52%),
+    linear-gradient(-45deg, transparent 48%, rgba(221,204,159,.16) 49%, rgba(221,204,159,.16) 51%, transparent 52%);
+}
+
+:root[data-theme="dark"] .home-mark,
+:root[data-theme="dark"] .theme-toggle,
+:root[data-theme="dark"] .continue-card,
+:root[data-theme="dark"] .install-card,
+:root[data-theme="dark"] .day-tile,
+:root[data-theme="dark"] .sidebar,
+:root[data-theme="dark"] .reader-tool,
+:root[data-theme="dark"] .pdf-toolbar,
+:root[data-theme="dark"] .pdf-tool,
+:root[data-theme="dark"] .day-action,
+:root[data-theme="dark"] .offline-status {
+  background: var(--paper);
+  border-color: var(--line);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+:root[data-theme="dark"] .home h1,
+:root[data-theme="dark"] .home-arabic,
+:root[data-theme="dark"] .home-english,
+:root[data-theme="dark"] .reader-title,
+:root[data-theme="dark"] .topbar-arabic,
+:root[data-theme="dark"] .current-day,
+:root[data-theme="dark"] .day-name,
+:root[data-theme="dark"] .sidebar a,
+:root[data-theme="dark"] .reader-tool,
+:root[data-theme="dark"] .pdf-tool,
+:root[data-theme="dark"] .day-action {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .home-english,
+:root[data-theme="dark"] .home-arabic { color: var(--gold-soft); }
+:root[data-theme="dark"] .home-link { color: var(--muted); }
+:root[data-theme="dark"] .home-link:hover { color: var(--gold-soft); }
+:root[data-theme="dark"] .day-tile:hover,
+:root[data-theme="dark"] .sidebar a:hover:not(.active),
+:root[data-theme="dark"] .reader-tool:hover,
+:root[data-theme="dark"] .pdf-tool:hover,
+:root[data-theme="dark"] .day-action:hover {
+  background: #31363b;
+  border-color: var(--gold);
+  color: var(--gold-soft);
+}
+
+:root[data-theme="dark"] .day-tile.active,
+:root[data-theme="dark"] .sidebar a.active,
+:root[data-theme="dark"] .day-action.primary {
+  background: #343a3f;
+  border-color: var(--gold);
+  color: var(--gold-soft);
+}
+
+:root[data-theme="dark"] .day-tile small,
+:root[data-theme="dark"] .reader-help,
+:root[data-theme="dark"] .day-number,
+:root[data-theme="dark"] .sidebar-label,
+:root[data-theme="dark"] .subtitle,
+:root[data-theme="dark"] .offline-status,
+:root[data-theme="dark"] .reader-help { color: var(--muted); }
+
+:root[data-theme="dark"] .theme-toggle {
+  background: #292d31;
+  color: var(--gold-soft);
+}
+
+:root[data-theme="dark"] .reading-progress {
+  background: #3b4146;
+}
+
+:root[data-theme="dark"] .reading-progress span {
+  background: var(--gold);
+}
+
+/* Mushaf pages: turn the white paper into a restrained charcoal page while
+   keeping the Arabic text and page markings readable. */
+:root[data-theme="dark"] .pdf-page {
+  filter: invert(.88) hue-rotate(180deg) brightness(.82) contrast(.94);
+}
+
+:root[data-theme="dark"] .pdf-page-wrap {
+  background: #25292d;
+  box-shadow: 0 4px 18px rgba(0,0,0,.34);
+}
+
+:root[data-theme="dark"] .page-loading,
+:root[data-theme="dark"] .pdf-status,
+:root[data-theme="dark"] .error,
+:root[data-theme="dark"] .pdf-fallback {
+  background: #25292d;
+  color: var(--muted);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] .pdf-fallback a { color: var(--gold-soft); }
+
+:root[data-theme="dark"] .player {
+  background: #17191b;
+  border-top-color: #3f4549;
+  color: #eef0ed;
+}
+
+:root[data-theme="dark"] .restart-control {
+  border-color: rgba(221,204,159,.45);
+  background: #25292d;
+  color: var(--gold-soft);
+}
+
+:root[data-theme="dark"] .speed-menu {
+  background: #25292d;
+  border-color: #4b5156;
+  box-shadow: 0 10px 28px rgba(0,0,0,.42);
+}
+
+:root[data-theme="dark"] .speed-option {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .speed-option:hover,
+:root[data-theme="dark"] .speed-option[aria-checked="true"] {
+  background: #343a3f;
+  color: var(--gold-soft);
+}
+
+:root[data-theme="dark"] .audio-progress-track {
+  background: rgba(255,255,255,.18);
+}
+
+:root[data-theme="dark"] .audio-progress-fill { background: var(--gold-soft); }
+:root[data-theme="dark"] .audio-progress-thumb { border-color: #eef0ed; background: var(--gold-soft); }
+
+@media (max-width: 800px) {
+  :root[data-theme="dark"] .audio-progress-track { background: rgba(255,255,255,.18); }
+  :root[data-theme="dark"] .restart-control { background: #25292d; color: var(--gold-soft); }
+}
