@@ -1307,3 +1307,34 @@ audio {
   .completion-status strong { font-size: .66rem; }
   .completion-percent, .completion-mark { width: 25px; height: 25px; }
 }
+
+
+/* Persistent reader navigation: keep Home available while scrolling through long PDF portions. */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(247,244,236,.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+:root[data-theme="dark"] .topbar {
+  background: rgba(29,32,35,.94);
+  border-bottom-color: var(--line);
+}
+
+@media (max-width: 800px) {
+  .topbar {
+    margin: 0 -8px;
+    padding-left: 11px;
+    padding-right: 11px;
+    min-height: 48px;
+  }
+
+  .home-link {
+    min-height: 36px;
+    padding: 5px 10px;
+    font-size: .82rem;
+  }
+}
