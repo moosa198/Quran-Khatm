@@ -24,15 +24,15 @@ function undoComplete(k){
 }
 function progressFor(k){
   const d=day(k), p=get(P+'progress:'+k,{})||{};
-  const page=Number(p.page)||0, audio=Number(p.audio)||0;
+  const page=Number(p.page)||0;
   const pagePct=d.pages[1]>d.pages[0]?Math.max(0,Math.min(100,(page-d.pages[0]+1)/(d.pages[1]-d.pages[0]+1)*100)):0;
-  return Math.round(Math.max(pagePct,audio));
+  return Math.round(pagePct);
 }
 function updateHomeCompletion(){
   document.querySelectorAll('.day-tile[data-day]').forEach(tile=>{
     const k=tile.dataset.day, target=tile.querySelector('[data-day-progress]');
     if(!target)return;
-    target.textContent=isComplete(k)?'✓ Shukr · completed':progressFor(k)+'%';
+    target.textContent=isComplete(k)?'✓ Shukr · completed':progressFor(k)+'% read';
     target.classList.toggle('is-complete',isComplete(k));
   });
 }
@@ -42,7 +42,7 @@ function updateCompletionUI(k){
   box.classList.toggle('is-complete',done);
   box.innerHTML=done
     ? '<span class="completion-mark" aria-hidden="true">✓</span><span><strong>Shukr · completed</strong><small>This portion is complete.</small></span><button type="button" class="completion-undo" id="completion-undo">Undo</button>'
-    : '<span class="completion-percent" aria-hidden="true">'+pct+'%</span><span><strong>'+pct+'% complete</strong><small>Keep going at your own pace.</small></span>';
+    : '<span class="completion-percent" aria-hidden="true">'+pct+'%</span><span><strong>'+pct+'% read</strong><small>Keep going at your own pace.</small></span>';
   const undo=box.querySelector('#completion-undo'); if(undo)undo.onclick=()=>undoComplete(k);
 }
 function updateProgressState(k,kind,pct){
