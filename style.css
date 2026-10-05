@@ -1338,3 +1338,25 @@ audio {
     font-size: .82rem;
   }
 }
+
+/* UX polish: make the active reading day unmistakable in the day navigation. */
+.sidebar a.active {
+  font-weight: 700;
+  border-left: 3px solid var(--accent);
+  padding-left: 13px;
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+.sidebar a.active::after {
+  content: 'Reading';
+  float: right;
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: .2rem;
+}
+.day-progress {
+  letter-spacing: .01em;
+}
