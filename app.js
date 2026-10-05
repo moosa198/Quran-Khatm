@@ -1,12 +1,12 @@
 (function(){
 const DAYS=[
-{key:'friday',name:'Friday',number:'01',surahs:'Al-Fātiḥah – Āl ʿImrān',pages:[2,147],pdf:'quran/friday.pdf',audio:'quran/friday.mp3'},
-{key:'saturday',name:'Saturday',number:'02',surahs:'An-Nisā’ – Al-Anfāl',pages:[147,288],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3'},
-{key:'sunday',name:'Sunday',number:'03',surahs:'At-Tawbah – Al-Ḥijr',pages:[288,393],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3'},
-{key:'monday',name:'Monday',number:'04',surahs:'An-Naḥl – An-Nūr',pages:[393,511],pdf:'quran/monday.pdf',audio:'quran/monday.mp3'},
-{key:'tuesday',name:'Tuesday',number:'05',surahs:'Al-Furqān – Fāṭir',pages:[511,618],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3'},
-{key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Fatḥ',pages:[618,721],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3'},
-{key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās',pages:[721,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3'}];
+{key:'friday',name:'Friday',number:'01',surahs:'Al-Fātiḥah – Āl ʿImrān',pages:[2,106],pdf:'quran/friday.pdf',audio:'quran/friday.mp3'},
+{key:'saturday',name:'Saturday',number:'02',surahs:'An-Nisā’ – Al-Anfāl',pages:[106,260],pdf:'quran/saturday.pdf',audio:'quran/saturday.mp3'},
+{key:'sunday',name:'Sunday',number:'03',surahs:'At-Tawbah – Al-Ḥijr',pages:[260,372],pdf:'quran/sunday.pdf',audio:'quran/sunday.mp3'},
+{key:'monday',name:'Monday',number:'04',surahs:'An-Naḥl – An-Nūr',pages:[372,501],pdf:'quran/monday.pdf',audio:'quran/monday.mp3'},
+{key:'tuesday',name:'Tuesday',number:'05',surahs:'Al-Furqān – Fāṭir',pages:[501,611],pdf:'quran/tuesday.pdf',audio:'quran/tuesday.mp3'},
+{key:'wednesday',name:'Wednesday',number:'06',surahs:'Yā-Sīn – Al-Fatḥ',pages:[611,716],pdf:'quran/wednesday.pdf',audio:'quran/wednesday.mp3'},
+{key:'thursday',name:'Thursday',number:'07',surahs:'Al-Ḥujurāt – An-Nās',pages:[716,849],pdf:'quran/thursday.pdf',audio:'quran/thursday.mp3'}];
 const P='quranKhatm:',completionKey=P+'completed',SPEEDS=[.75,1,1.25],pdfs=new Map(),speedKey=P+'speed',lastKey=P+'last';const TIME_ESTIMATES={"friday":"≈ 1 hr 24 min","saturday":"≈ 1 hr 19 min","sunday":"≈ 1 hr 1 min","monday":"≈ 1 hr 2 min","tuesday":"≈ 50 min","wednesday":"≈ 56 min","thursday":"≈ 57 min"};
 const get=(k,f=null)=>{try{const v=localStorage.getItem(k);return v==null?f:JSON.parse(v)}catch{return f}};
 const set=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
