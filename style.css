@@ -1,4 +1,4 @@
-/* Hizbul-Azam — traditional Islamic editorial theme — v15 */
+/* Qur'an Khatm — traditional Islamic editorial theme — v16 */
 
 :root {
   --ivory: #f7f4ec;
@@ -334,6 +334,7 @@ audio {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+  padding-right: 46px;
   max-width: 1320px;
   margin: 0 auto;
   padding: 13px 0 11px;
@@ -380,6 +381,7 @@ audio {
   align-items: baseline;
   gap: 9px;
   text-align: right;
+  margin-left: auto;
 }
 
 .topbar-arabic {
@@ -566,6 +568,7 @@ audio {
 
 .pdf-page-wrap {
   position: relative;
+  scroll-margin-top: 72px;
   width: min(800px, 100%);
   margin: 0 auto 22px;
   overflow-x: auto;
@@ -792,7 +795,8 @@ audio {
 
   .page { padding: 0 8px 104px; }
 
-  .topbar { padding: 11px 3px 9px; }
+  .topbar { padding: 11px 46px 9px 11px; }
+  .topbar .theme-toggle { right: 0; }
   .topbar-arabic { display: none; }
   .day-heading { gap: 6px; }
   .current-day { font-size: .95rem; }
@@ -849,13 +853,18 @@ audio {
   }
 
   .day-actions {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
     width: 100%;
     margin: 14px 0 0;
   }
 
   .day-action.muted { display: none; }
-  .day-action { min-height: 38px; padding: 7px 9px; font-size: .76rem; }
+  .day-action { flex: 1 1 0; min-width: 0; min-height: 38px; padding: 7px 7px; font-size: .76rem; }
+  .day-action:first-child,
+  .day-action:last-child { justify-self: auto; }
+  .day-action.home-action { flex: 1 1 0; }
 
   .player {
     padding: 7px 9px calc(8px + env(safe-area-inset-bottom));
@@ -1339,24 +1348,26 @@ audio {
   }
 }
 
-/* UX polish: make the active reading day unmistakable in the day navigation. */
+/* UX polish: clear current-day state without adding a competing text label. */
 .sidebar a.active {
   font-weight: 700;
-  border-left: 3px solid var(--accent);
-  padding-left: 13px;
-  background: var(--surface-strong);
-  color: var(--ink);
+  border-left: 3px solid var(--gold);
+  padding-left: 10px;
+  background: var(--green-50);
+  color: var(--green-950);
 }
-.sidebar a.active::after {
-  content: 'Reading';
-  float: right;
-  font-size: .68rem;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: .2rem;
+.sidebar a.active::after { content: none; }
+.day-progress { letter-spacing: .01em; }
+
+/* Keep sticky navigation from covering restored pages and preserve visible focus. */
+button:focus-visible,
+.continue-card:focus-visible,
+.day-tile:focus-visible,
+.reader-tool:focus-visible,
+.pdf-tool:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
-.day-progress {
-  letter-spacing: .01em;
-}
+
+.mushaf-page-label { font-variant-numeric: tabular-nums; }
+.page-separator { color: var(--line); }
