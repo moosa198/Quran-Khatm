@@ -46,8 +46,8 @@ function updateCompletionUI(k){
   const undo=box.querySelector('#completion-undo'); if(undo)undo.onclick=()=>undoComplete(k);
 }
 function updateProgressState(k,kind,pct){
-  const n=Math.max(0,Math.min(100,Number(pct)||0));
-  const p=get(P+'progress:'+k,{})||{}; p[kind]=n; p.updated=Date.now(); set(P+'progress:'+k,p);
+  const n=Math.round(Math.max(0,Math.min(100,Number(pct)||0)));
+  const p=get(P+'progress:'+k,{})||{}; if(p[kind]===n)return; p[kind]=n; p.updated=Date.now(); set(P+'progress:'+k,p);
   updateCompletionUI(k); updateHomeCompletion();
 }
 function completionUI(k){
